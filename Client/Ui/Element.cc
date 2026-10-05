@@ -197,7 +197,7 @@ void Element::poll_events(ScreenEvent const &event) {
     }
 }
 
-std::vector<Element *> const Ui::make_range(uint32_t start, uint32_t end, Element *gen(uint32_t)) {
+std::vector<Element *> const Ui::make_range(uint32_t start, uint32_t end, std::function<Element *(uint32_t)> gen) {
     std::vector<Element *> elts;
     for (uint32_t i = start; i < end; ++i)
         elts.push_back(gen(i));

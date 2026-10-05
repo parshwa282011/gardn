@@ -10,11 +10,13 @@ namespace Ui {
             kSettings,
             kPetals,
             kMobs,
+            kSaves,
             kChangelog
         };
         extern Element *settings;
         extern Element *petal_gallery;
         extern Element *mob_gallery;
+        extern Element *progress_saves;
         extern Element *changelog;
     }
     extern double dt;

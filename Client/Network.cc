@@ -61,15 +61,14 @@ void Game::send_inputs() {
     socket.send(writer.packet, writer.at - writer.packet);
 }
 
-void Game::spawn_in() {
+void Game::spawn_in(uint64_t restore_id) {
     Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
     if (Game::alive()) return;
     if (Game::on_game_screen == 0) {
         writer.write<uint8_t>(Serverbound::kClientSpawn);
-        std::string name = Game::nickname;
-        std::string pwd = Game::dev_password;
-        writer.write<std::string>(name);
-        writer.write<std::string>(pwd);
+        writer.write<uint64_t>(restore_id);
+        writer.write<std::string>(Game::nickname);
+        writer.write<std::string>(Game::dev_password);
         socket.send(writer.packet, writer.at - writer.packet);
     } else Game::on_game_screen = 0;
 }
@@ -110,5 +109,12 @@ void Game::switch_gamemode(uint8_t gamemode) {
     if (Game::alive()) return;
     writer.write<uint8_t>(Serverbound::kGamemodeSwitch);
     writer.write<uint8_t>(gamemode);
+    socket.send(writer.packet, writer.at - writer.packet);
+}
+
+void Game::save_progress() {
+    Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
+    if (!Game::alive()) return;
+    writer.write<uint8_t>(Serverbound::kProgressSave);
     socket.send(writer.packet, writer.at - writer.packet);
 }

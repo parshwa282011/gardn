@@ -195,6 +195,22 @@ Element *Ui::make_panel_buttons() {
             [](){ return Ui::panel_open == Panel::kMobs; },
             { .fill = 0xff5a9fdb, .line_width = 5, .round_radius = 3 }
         ),
+        new Ui::Button(100, 35, 
+            new Ui::StaticText(16, "Saves"), 
+            [](Element *elt, uint8_t e){ if (e == Ui::kClick) {
+                if (Ui::panel_open != Panel::kSaves) {
+                    Ui::panel_open = Panel::kSaves;
+                    Element *pg = Ui::Panel::progress_saves;
+                    pg->x = elt->screen_x / Ui::scale - pg->width / 2;
+                    pg->y = -(elt->height + 20);
+                    if (pg->x < 10) 
+                        pg->x = 10;
+                }
+                else Ui::panel_open = Panel::kNone;
+            } },
+            [](){ return Ui::panel_open == Panel::kSaves; },
+            { .fill = 0xff5a9fdb, .line_width = 5, .round_radius = 3 }
+        ),
         new Ui::ShakeButton(120, 35, 
             new Ui::StaticText(16, "Changelog"), 
             [](Element *elt, uint8_t e){ if (e == Ui::kClick) {

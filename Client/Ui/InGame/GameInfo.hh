@@ -35,6 +35,12 @@ namespace Ui {
         virtual void on_render(Renderer &) override;
     };
 
+    class ProgressSaveTimer final : public Element {
+    public:
+        ProgressSaveTimer(float);
+        virtual void on_render(Renderer &) override;
+    };
+
     class MobileJoyStick final : public Element {
         float joystick_x;
         float joystick_y;
@@ -51,10 +57,12 @@ namespace Ui {
     Element *make_level_bar();
     Element *make_minimap();
     Element *make_overlevel_indicator();
+    Element *make_saving_indicator();
     Element *make_mobile_attack_button();
     Element *make_mobile_defend_button();
     Element *make_mobile_swap_all_button();
     Element *make_mobile_chat_button();
     Element *make_mobile_fullscreen_button();
+    Element *make_mobile_save_progress_button();
     Element *make_mobile_joystick();
 }

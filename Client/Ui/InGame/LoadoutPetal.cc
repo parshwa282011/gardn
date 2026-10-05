@@ -39,13 +39,6 @@ void Ui::backward_secondary_select() {
     Ui::UiLoadout::selected_with_keys = MAX_SLOT_COUNT;
 }
 
-static uint8_t static_to_dynamic(uint8_t static_pos) {
-    if (static_pos >= Game::loadout_count) 
-        return std::min(MAX_SLOT_COUNT + static_pos - Game::loadout_count, 2 * MAX_SLOT_COUNT);
-    else
-        return static_pos;
-}
-
 void Ui::ui_delete_petal(uint8_t static_pos) {
     Game::delete_petal(static_pos);
     Ui::UiLoadout::petal_slots[static_pos]->curr_pos = 2 * MAX_SLOT_COUNT;
@@ -66,10 +59,20 @@ void Ui::ui_swap_petals(uint8_t static_pos1, uint8_t static_pos2) {
     Game::swap_petals(static_pos1, static_pos2);
 }
 
-static uint8_t dynamic_to_static(uint8_t dynamic_pos) {
-    if (dynamic_pos >= MAX_SLOT_COUNT)
-        dynamic_pos -= (MAX_SLOT_COUNT - Game::loadout_count);
-    return dynamic_pos; 
+uint8_t Ui::UiLoadout::static_to_dynamic(uint8_t static_pos, uint8_t loadout_count) {
+    if (static_pos < loadout_count)
+        return static_pos;
+    if (static_pos < loadout_count + MAX_SLOT_COUNT)
+        return static_pos + MAX_SLOT_COUNT - loadout_count;
+    return static_pos - MAX_SLOT_COUNT;
+}
+
+uint8_t Ui::UiLoadout::dynamic_to_static(uint8_t dynamic_pos, uint8_t loadout_count) {
+    if (dynamic_pos < loadout_count)
+        return dynamic_pos;
+    if (dynamic_pos < MAX_SLOT_COUNT)
+        return dynamic_pos + MAX_SLOT_COUNT;
+    return dynamic_pos + loadout_count - MAX_SLOT_COUNT;
 }
 
 
@@ -123,7 +126,7 @@ UiLoadoutPetal::UiLoadoutPetal(uint8_t pos) : Element(60, 60),
         float lerp_amt = Ui::lerp_amount * 0.75;
         reload.step(lerp_amt);
         if (curr_pos != 2 * MAX_SLOT_COUNT) 
-            curr_pos = static_to_dynamic(static_pos);
+            curr_pos = Ui::UiLoadout::static_to_dynamic(static_pos, Game::loadout_count);
         
         float mouse_x, mouse_y;
         uint8_t released;
@@ -150,13 +153,13 @@ UiLoadoutPetal::UiLoadoutPetal(uint8_t pos) : Element(60, 60),
         if (selected && Game::alive()) {
             style.layer = 1;
             uint8_t potential_swap = find_viable_target(mouse_x, mouse_y);
-            if (potential_swap != ((uint8_t)-1) && potential_swap != static_to_dynamic(static_pos)) {
+            if (potential_swap != ((uint8_t)-1) && potential_swap != Ui::UiLoadout::static_to_dynamic(static_pos, Game::loadout_count)) {
                 if (released) {
                     if (potential_swap == 2 * MAX_SLOT_COUNT)
                         ui_delete_petal(static_pos);
                     else {
                         //find static pos of both
-                        potential_swap = dynamic_to_static(potential_swap);
+                        potential_swap = Ui::UiLoadout::dynamic_to_static(potential_swap, Game::loadout_count);
                         ui_swap_petals(potential_swap, static_pos);
                     }
                 } else {

@@ -8,7 +8,7 @@
 
 using namespace Ui;
 
-ScrollBar::ScrollBar() : Element(8, 100, { .fill = 0x40000000, .round_radius = 4 }) {
+ScrollBar::ScrollBar() : Element(8, 0, { .fill = 0x40000000, .round_radius = 4 }) {
     style.animate = [&](Element *elt, Renderer &ctx){
         if (elt->style.layer && BitMath::at(Input::mouse_buttons_released, Input::LeftMouse))
             elt->style.layer = 0;
@@ -47,7 +47,7 @@ void ScrollContainer::on_render(Renderer &ctx) {
         scroll->y = lerp(scroll->y, lerp_scroll, Ui::lerp_amount);
         content->y = lerp(content->y, -ratio * lerp_scroll, Ui::lerp_amount);
     } else 
-        content->y = scroll->y = 0;
+        content->y = scroll->y = scroll->height = 0;
     RenderContext c(&ctx);
     ctx.clip_rect(0,0,width,height);
     for (Element *elt : children) {

@@ -40,6 +40,7 @@ namespace Game {
 
     double score = 0;
     float overlevel_timer = 0;
+    float saving_timer = 0;
     float slot_indicator_opacity = 0;
     float transition_circle = 0;
 
@@ -61,6 +62,10 @@ namespace Game {
 
     uint32_t changelog_entries = 0;
     uint32_t seen_changelog = 0;
+
+    uint8_t can_restore = 0;
+    std::vector<struct PlayerProgress> progress_saves;
+    std::vector<uint64_t> restore_ids;
 }
 
 using namespace Game;
@@ -101,6 +106,9 @@ void Game::init() {
         Ui::make_mob_gallery()
     );
     title_ui_window.add_child(
+        Ui::make_progress_saves()
+    );
+    title_ui_window.add_child(
         Ui::make_changelog()
     );
     title_ui_window.add_child(
@@ -129,6 +137,9 @@ void Game::init() {
         Ui::make_overlevel_indicator()
     );
     game_ui_window.add_child(
+        Ui::make_saving_indicator()
+    );
+    game_ui_window.add_child(
         Ui::make_stat_screen()
     );
     game_ui_window.add_child(
@@ -145,6 +156,9 @@ void Game::init() {
     );
     game_ui_window.add_child(
         Ui::make_mobile_fullscreen_button()
+    );
+    game_ui_window.add_child(
+        Ui::make_mobile_save_progress_button()
     );
     game_ui_window.add_child(
         Ui::make_chat_input()
@@ -185,6 +199,8 @@ void Game::reset() {
     on_game_screen = 0;
     score = 0;
     overlevel_timer = 0;
+    saving_timer = 0;
+    can_restore = 0;
     slot_indicator_opacity = 0;
     transition_circle = 0;
     respawn_level = 1;
@@ -255,15 +271,48 @@ void Game::tick(double time) {
         }
         score = player.get_score();
         overlevel_timer = player.get_overlevel_timer();
+        saving_timer = player.get_saving_timer();
         nickname = player.get_name();
     } else {
         player_id = NULL_ENTITY;
         overlevel_timer = 0;
+        saving_timer = 0;
     }
-    if (simulation.ent_exists(camera_id))
-        recovery_id = simulation.get_ent(camera_id).get_recovery_id();
-    if (simulation_ready)
+
+    if (simulation_ready) {
+        DEBUG_ONLY(assert(simulation.ent_exists(camera_id));)
+        Entity &camera = simulation.get_ent(camera_id);
         gamemode = simulation.arena_info.gamemode;
+        recovery_id = camera.get_recovery_id();
+        if (!simulation.ent_alive(player_id)) {
+            if (camera.get_saving_progress())
+                on_game_screen = 0;
+
+            can_restore = camera.get_respawn_level() < 45;
+            for (uint8_t i = 0; i < loadout_slots_at_level(camera.get_respawn_level()) + MAX_SLOT_COUNT; ++i) {
+                if (PETAL_DATA[camera.get_inventory(i)].rarity >= RarityID::kLegendary) {
+                    can_restore = 0;
+                    break;
+                }
+            }
+
+            progress_saves.clear();
+            restore_ids.clear();
+            simulation.for_each<kProgress>([](Simulation *sim, Entity &ent){
+                std::array<PetalID::T, 2 * MAX_SLOT_COUNT> loadout;
+                for (uint8_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
+                    loadout[i] = ent.get_saved_loadout(i);
+                progress_saves.push_back({ .restore_id = ent.get_restore_id(), .score = ent.get_score(), .loadout = loadout });
+                restore_ids.push_back(ent.get_restore_id());
+            });
+
+            std::sort(progress_saves.begin(), progress_saves.end(), [](PlayerProgress &a, PlayerProgress &b){
+                if (a.score != b.score)
+                    return a.score > b.score;
+                return a.restore_id > b.restore_id;
+            });
+        }
+    }
 
     //event poll
     if (Input::is_mobile) {
@@ -302,7 +351,7 @@ void Game::tick(double time) {
             renderer.clip();
         }
         render_game();
-        if (!Game::alive()) {
+        if (!Game::alive() && !simulation.get_ent(camera_id).get_saving_progress()) {
             RenderContext c(&renderer);
             renderer.reset_transform();
             renderer.set_fill(0x20000000);
@@ -316,6 +365,8 @@ void Game::tick(double time) {
             //process keybind petal switches
             if (Input::keys_held_this_tick.contains('X'))
                 Game::swap_all_petals();
+            else if (Input::keys_held_this_tick.contains('G'))
+                Game::save_progress();
             else if (Input::keys_held_this_tick.contains('E')) 
                 Ui::forward_secondary_select();
             else if (Input::keys_held_this_tick.contains('Q')) 

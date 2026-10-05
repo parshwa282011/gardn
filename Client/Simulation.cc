@@ -85,6 +85,8 @@ void Entity::tick_lerp(float amt) {
             || pending_delete) mouth = lerp(mouth, 5, amt);
         else if (BitMath::at(face_flags, FaceFlags::kDefending)) mouth = lerp(mouth, 8, amt);
         else mouth = lerp(mouth, 15, amt);
+        overlevel_timer.step(amt);
+        saving_timer.step(amt);
     }
 }
 

@@ -22,6 +22,9 @@ extern "C" {
             w.write<uint64_t>(VERSION_HASH);
             w.write<uint64_t>(Game::recovery_id);
             w.write<uint8_t>(Game::gamemode);
+            for (uint32_t i = 0; i < Game::restore_ids.size() && i < MAX_PROGRESS_SAVES; ++i)
+                w.write<uint64_t>(Game::restore_ids[i]);
+            w.write<uint64_t>(0);
             Game::socket.ready = 1; //force send
             Game::socket.send(w.packet, w.at - w.packet);
             Game::socket.ready = 0;

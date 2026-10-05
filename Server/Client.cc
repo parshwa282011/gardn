@@ -16,7 +16,7 @@
 
 Client::Client() : game(nullptr) {}
 
-void Client::init(uint64_t recovery_id, uint8_t gamemode) {
+void Client::init(uint64_t recovery_id, uint8_t gamemode, std::vector<uint64_t> restore_ids) {
     DEBUG_ONLY(assert(game == nullptr);)
     DEBUG_ONLY(recovery_id = 0;)
     EntityID camera_id = NULL_ENTITY;
@@ -34,13 +34,19 @@ void Client::init(uint64_t recovery_id, uint8_t gamemode) {
         return;
     }
     Server::games[gamemode].add_client(this, camera_id);
+    if (camera_id == NULL_ENTITY)
+        game->find_progress_saves(this, restore_ids);
 }
 
 void Client::move(GameInstance *new_game) {
     if (game == new_game) return;
     Entity &old_camera = game->simulation.get_ent(camera);
+    std::vector<uint64_t> restore_ids;
+    for (EntityID id : old_camera.progress_saves)
+        restore_ids.push_back(game->simulation.get_ent(id).get_restore_id());
     game->simulation.request_delete(camera);
     new_game->add_client(this, NULL_ENTITY);
+    game->find_progress_saves(this, restore_ids);
     Entity &new_camera = game->simulation.get_ent(camera);
     new_camera.set_respawn_level(old_camera.get_respawn_level());
     for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i) {
@@ -95,13 +101,22 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
         }
         if (client->check_invalid(
             validator.validate_uint64() &&
-            validator.validate_uint8()
+            validator.validate_uint8() &&
+            validator.validate_uint64()
         )) return;
         uint64_t recovery_id = reader.read<uint64_t>();
         uint8_t gamemode = reader.read<uint8_t>();
         if (client->check_invalid(gamemode < Gamemode::kNumGamemodes)) return;
+        std::vector<uint64_t> restore_ids;
+        uint64_t restore_id = reader.read<uint64_t>();
+        while (restore_id != 0) {
+            if (client->check_invalid(restore_ids.size() < MAX_PROGRESS_SAVES)) return;
+            restore_ids.push_back(restore_id);
+            if (client->check_invalid(validator.validate_uint64())) return;
+            restore_id = reader.read<uint64_t>();
+        }
         client->verified = 1;
-        client->init(recovery_id, gamemode);
+        client->init(recovery_id, gamemode, restore_ids);
         return;
     }
     if (client->game == nullptr) {
@@ -143,16 +158,20 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             if (client->alive()) break;
             //check string length
             std::string name, pwd;
+            if (client->check_invalid(validator.validate_uint64())) return;
             if (client->check_invalid(validator.validate_string(MAX_NAME_LENGTH))) return;
             if (client->check_invalid(validator.validate_string(MAX_DEV_PWD_LENGTH))) return;
+            uint64_t restore_id = reader.read<uint64_t>();
             reader.read<std::string>(name);
             reader.read<std::string>(pwd);
             if (client->check_invalid(UTF8Parser::is_valid_utf8(name))) return;
-            for (char &c : pwd) c ^= pwd.capacity(); // try harder skid2d
+            for (char &c : pwd) c ^= pwd.capacity();
             Simulation *simulation = &client->game->simulation;
             Entity &camera = simulation->get_ent(client->camera);
+            uint32_t score = client->game->restore_progress(client, restore_id);
             Entity &player = alloc_player(simulation, camera.get_team());
             player_spawn(simulation, camera, player);
+            if (score != 0) player.set_score(score);
             player.set_name(name);
             uint8_t dev = pwd == "ez hax"; // feel free to use
             camera.set_dev(dev);
@@ -213,6 +232,14 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             uint8_t gamemode = reader.read<uint8_t>();
             if (client->check_invalid(gamemode < Gamemode::kNumGamemodes)) return;
             client->move(&Server::games[gamemode]);
+            break;
+        }
+        case Serverbound::kProgressSave: {
+            if (!client->alive()) break;
+            Simulation *simulation = &client->game->simulation;
+            Entity &camera = simulation->get_ent(client->camera);
+            if (!simulation->ent_alive(camera.get_player())) break;
+            camera.set_saving_progress(!camera.get_saving_progress());
             break;
         }
     }

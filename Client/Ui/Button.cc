@@ -6,7 +6,7 @@
 
 using namespace Ui;
 
-Button::Button(float w, float h, Element *l, void x(Element *, uint8_t), bool y (void), Style s) :
+Button::Button(float w, float h, Element *l, std::function<void (Element *, uint8_t)> x, bool y (void), Style s) :
     Element(w, h, s), on_click(x), should_darken(y)
 {
     if (l != nullptr) children.push_back(l);

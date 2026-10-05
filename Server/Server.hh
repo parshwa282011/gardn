@@ -23,6 +23,7 @@ namespace Server {
     extern uint8_t OUTGOING_PACKET[MAX_PACKET_LEN];
     extern std::array<GameInstance, Gamemode::kNumGamemodes> games;
     extern std::array<uint32_t, PetalID::kNumPetals> petal_count_tracker;
+    extern std::unordered_map<uint64_t, struct PlayerProgress> progress_saves;
     #ifdef WASM_SERVER
     extern WebSocketServer server;
     #endif

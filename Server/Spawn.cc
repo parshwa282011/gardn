@@ -219,6 +219,19 @@ Entity &alloc_dot(Simulation *sim, Entity const &parent) {
     return dot;
 }
 
+Entity &alloc_progress(Simulation *sim, struct PlayerProgress &progress, Entity const &parent) {
+    Entity &ent = sim->alloc_ent();
+    ent.add_component(kRelations);
+    ent.set_parent(parent.id);
+    ent.add_component(kScore);
+    ent.set_score(progress.score);
+    ent.add_component(kProgress);
+    ent.set_restore_id(progress.restore_id);
+    for (uint8_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
+        ent.set_saved_loadout(i, progress.loadout[i]);
+    return ent;
+}
+
 Entity &alloc_camera(Simulation *sim, EntityID const team) {
     ++Server::player_count;
     Entity &ent = sim->alloc_ent();

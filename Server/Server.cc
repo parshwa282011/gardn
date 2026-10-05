@@ -2,6 +2,7 @@
 
 #include <Server/Game.hh>
 #include <Server/Client.hh>
+#include <Server/PetalTracker.hh>
 
 #include <Shared/Binary.hh>
 
@@ -17,6 +18,7 @@ namespace Server {
         GameInstance(Gamemode::kTDM)
     };
     std::array<uint32_t, PetalID::kNumPetals> petal_count_tracker = {0};
+    std::unordered_map<uint64_t, struct PlayerProgress> progress_saves = {};
     volatile sig_atomic_t is_draining = false;
     bool is_stopping = false;
     uint32_t player_count = 0;
@@ -36,6 +38,12 @@ void Server::tick() {
         was_draining = true;
         std::cout << "draining...\n";
     }
-    if (Server::is_draining && !Server::is_stopping && Server::player_count == 0)
+    if (Server::is_draining && !Server::is_stopping && Server::player_count == 0) {
         Server::stop();
+        #ifndef DEBUG
+        for (PetalID::T id = 0; id < PetalID::kNumPetals; ++id) {
+            assert(PetalTracker::get_count(id) == 0);
+        }
+        #endif
+    }
 }

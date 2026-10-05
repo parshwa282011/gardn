@@ -7,6 +7,7 @@ namespace Ui {
         Element *settings = nullptr;
         Element *petal_gallery = nullptr;
         Element *mob_gallery = nullptr;
+        Element *progress_saves = nullptr;
         Element *changelog = nullptr;
     }
     double dt = 0;

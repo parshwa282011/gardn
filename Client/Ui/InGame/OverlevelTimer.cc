@@ -31,7 +31,7 @@ Element *Ui::make_overlevel_indicator() {
             new Ui::StaticText(18, "MOVE RIGHT →", { .fill = 0xffea7f80, .h_justify = Style::Left }),
             new Ui::StaticText(14, "You are overleveled for this zone", { .fill = 0xffffffff, .h_justify = Style::Left }),
             new Ui::StaticText(14, "You will be unable to attack", { .fill = 0xffffffff, .h_justify = Style::Left }),
-        }, 0, 3),
+        }, 0, 5),
         new OverlevelTimer(50)
     }, 10, 20, {
         .fill = 0x40000000,
@@ -44,6 +44,46 @@ Element *Ui::make_overlevel_indicator() {
             Entity const &player = Game::simulation.get_ent(Game::player_id);
             return MAP_DATA[Map::get_zone_from_pos(player.get_x(), player.get_y())].difficulty < Map::difficulty_at_level(score_to_level(Game::score))
             && Game::overlevel_timer > 0;
+        }
+    });
+    elt->y = -220;
+    return elt;
+}
+
+ProgressSaveTimer::ProgressSaveTimer(float w) : Element(w,w,{}) {}
+
+void ProgressSaveTimer::on_render(Renderer &ctx) {
+    float ratio = Game::saving_timer / (PROGRESS_SAVE_DELAY * TPS);
+    ctx.set_fill(0x80000000);
+    ctx.begin_path();
+    ctx.arc(0,0,width/2);
+    ctx.fill();
+    ctx.set_fill(0xff78c3c7);
+    ctx.begin_path();
+    ctx.move_to(0,0);
+    ctx.partial_arc(0,0,width/2*0.8,-M_PI/2,-M_PI/2+2*M_PI*ratio,0);
+    ctx.close_path();
+    ctx.fill();
+}
+
+Element *Ui::make_saving_indicator() {
+    Element *elt = new Ui::HContainer({
+        new Ui::VContainer({
+            new Ui::StaticText(18, "Saving your progress...", { .fill = 0xff78c3c7, .h_justify = Style::Left }),
+            new Ui::StaticText(14, "Stay still without taking damage", { .fill = 0xffffffff, .h_justify = Style::Left }),
+            new Ui::StaticText(14, "You can restore your progress later", { .fill = 0xffffffff, .h_justify = Style::Left }),
+        }, 0, 5),
+        new ProgressSaveTimer(50)
+    }, 10, 20, {
+        .fill = 0x40000000,
+        .round_radius = 5,
+        .animate = [](Element *elt, Renderer &ctx){
+            ctx.set_global_alpha(elt->animation);
+        },
+        .should_render = [](){
+            if (!Game::simulation.ent_alive(Game::player_id)) return false;
+            Entity const &camera = Game::simulation.get_ent(Game::camera_id);
+            return camera.get_saving_progress() == 1;
         }
     });
     elt->y = -220;

@@ -119,6 +119,8 @@ void entity_on_death(Simulation *sim, Entity const &ent) {
             return PETAL_DATA[a].rarity < PETAL_DATA[b].rarity;
         });
 
+        if (BitMath::at(ent.flags, EntityFlags::kIsDespawning))
+            potential.clear();
         std::vector<PetalID::T> success_drops = {};
         uint32_t numDrops = potential.size();
         if (numDrops > 3)
@@ -140,6 +142,8 @@ void entity_on_death(Simulation *sim, Entity const &ent) {
         //set respawn level
         uint32_t respawn_level = div_round_up(3 * score_to_level(ent.get_score()), 4);
         if (respawn_level > MAX_LEVEL) respawn_level = MAX_LEVEL;
+        if (BitMath::at(ent.flags, EntityFlags::kIsDespawning))
+            respawn_level = 1;
         camera.set_respawn_level(respawn_level);
         uint32_t max_possible = MAX_SLOT_COUNT + loadout_slots_at_level(respawn_level);
         num_left = std::min(num_left, max_possible);
@@ -171,5 +175,7 @@ void entity_on_death(Simulation *sim, Entity const &ent) {
             sim->request_delete(ent.get_player());
         for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
             PetalTracker::remove_petal(ent.get_inventory(i));
+        for (EntityID id : ent.progress_saves)
+            sim->request_delete(id);
     }
 }

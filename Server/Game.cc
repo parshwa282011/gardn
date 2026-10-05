@@ -29,6 +29,7 @@ static void _update_client(Simulation *sim, Client *client) {
         if (sim->get_ent(dot_id).get_team() != camera.get_team())
             in_view.insert(dot_id);
     }
+    in_view.insert(camera.progress_saves.begin(), camera.progress_saves.end());
     Writer writer(Server::OUTGOING_PACKET);
     writer.write<uint8_t>(Clientbound::kClientUpdate);
     writer.write<uint8_t>(client->seen_arena);
@@ -124,4 +125,68 @@ void GameInstance::remove_client(Client *client) {
         camera.client = nullptr;
     }
     client->game = nullptr;
+}
+
+void GameInstance::save_progress(Client *client) {
+    Entity &camera = simulation.get_ent(client->camera);
+    Entity &player = simulation.get_ent(camera.get_player());
+    player.last_damaged_by = NULL_ENTITY;
+    BitMath::set(player.flags, EntityFlags::kIsDespawning);
+    simulation.request_delete(player.id);
+
+    uint64_t restore_id = (static_cast<uint64_t>(std::rand()) << 32) | std::rand();
+    assert(restore_id != 0);
+    std::array<PetalID::T, 2 * MAX_SLOT_COUNT> loadout = {};
+    for (uint8_t i = 0; i < player.get_loadout_count() + MAX_SLOT_COUNT; ++i)
+        loadout[i] = player.get_loadout_ids(i);
+    struct PlayerProgress progress = { .restore_id = restore_id, .score = player.get_score(), .loadout = loadout };
+    bool inserted = Server::progress_saves.insert({restore_id, progress}).second;
+    assert(inserted);
+    DEBUG_ONLY(assert(camera.progress_saves.size() < MAX_PROGRESS_SAVES);)
+    camera.progress_saves.push_back(alloc_progress(&simulation, progress, camera).id);
+}
+
+uint32_t GameInstance::restore_progress(Client *client, uint64_t restore_id) {
+    Entity &camera = simulation.get_ent(client->camera);
+    auto iter = Server::progress_saves.find(restore_id);
+    if (iter == Server::progress_saves.end())
+        return 0;
+
+    struct PlayerProgress progress = iter->second;
+    camera.set_respawn_level(score_to_level(progress.score));
+    for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
+        PetalTracker::remove_petal(camera.get_inventory(i));
+    for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i) {
+        PetalID::T id = progress.loadout[i];
+        if (PETAL_DATA[id].rarity == RarityID::kUnique && PetalTracker::get_count(id) > 0)
+            id = PetalID::kNone;
+        camera.set_inventory(i, id);
+        PetalTracker::add_petal(id);
+    }
+
+    Server::progress_saves.erase(iter);
+    simulation.for_each<kProgress>([=](Simulation *sim, Entity &ent){
+        if (ent.get_restore_id() == restore_id) {
+            sim->request_delete(ent.id);
+            std::erase(sim->get_ent(ent.get_parent()).progress_saves, ent.id);
+        }
+    });
+
+    return progress.score;
+}
+
+void GameInstance::find_progress_saves(Client *client, std::vector<uint64_t> restore_ids) {
+    Entity &camera = simulation.get_ent(client->camera);
+    DEBUG_ONLY(assert(camera.progress_saves.size() == 0);)
+    DEBUG_ONLY(assert(restore_ids.size() <= MAX_PROGRESS_SAVES);)
+    std::sort(restore_ids.begin(), restore_ids.end());
+    restore_ids.erase(std::unique(restore_ids.begin(), restore_ids.end()), restore_ids.end());
+
+    for (uint64_t restore_id : restore_ids) {
+        auto iter = Server::progress_saves.find(restore_id);
+        if (iter == Server::progress_saves.end())
+            continue;
+        struct PlayerProgress &progress = iter->second;
+        camera.progress_saves.push_back(alloc_progress(&simulation, progress, camera).id);
+    }
 }

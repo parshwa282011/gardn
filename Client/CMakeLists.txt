@@ -48,6 +48,7 @@ set(SRCS
     Ui/TitleScreen/MainScreen.cc
     Ui/TitleScreen/MobGallery.cc
     Ui/TitleScreen/PetalGallery.cc
+    Ui/TitleScreen/ProgressSaves.cc
     Ui/TitleScreen/Settings.cc
     Ui/TitleScreen/StatScreen.cc
     Ui/Button.cc

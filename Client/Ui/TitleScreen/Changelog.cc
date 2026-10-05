@@ -33,6 +33,14 @@ static Element *make_entries(std::initializer_list<std::string const> contents) 
 
 static Element *make_changelog_contents() {
     Element *elt = new Ui::VContainer({
+        make_date("October 5th 2026"),
+        make_entries({
+            "Automated progress save and restore system",
+            "Note that progress save IDs are stored locally and will be gone if you clear site data",
+            "Restoring is disabled while current progress is eligible for saving, to prevent overwriting it",
+            "Server-side persistent storage is still in development: keeping additional proof of your progress won't hurt"
+        }),
+        make_divider(),
         make_date("December 14th 2025"),
         make_entries({
             "Added 8 new petals",

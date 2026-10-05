@@ -69,6 +69,9 @@ namespace Ui {
         extern uint8_t selected_with_keys;
         extern double last_key_select;
         extern uint32_t num_petals_selected;
+
+        uint8_t static_to_dynamic(uint8_t, uint8_t);
+        uint8_t dynamic_to_static(uint8_t, uint8_t);
     };
 
     Element *make_loadout_backgrounds();

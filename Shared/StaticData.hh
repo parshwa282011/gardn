@@ -6,6 +6,7 @@
 #include <cstdint>
 
 extern float const PETAL_DISABLE_DELAY;
+extern float const PROGRESS_SAVE_DELAY;
 extern float const PLAYER_ACCELERATION;
 extern float const DEFAULT_FRICTION;
 extern float const LIGHTNING_STRIKE_RADIUS;

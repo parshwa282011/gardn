@@ -30,6 +30,7 @@ namespace Game {
     
     extern double score;
     extern float overlevel_timer;
+    extern float saving_timer;
     extern float slot_indicator_opacity;
     extern float transition_circle;
 
@@ -53,6 +54,10 @@ namespace Game {
     extern uint32_t changelog_entries;
     extern uint32_t seen_changelog;
 
+    extern uint8_t can_restore;
+    extern std::vector<struct PlayerProgress> progress_saves;
+    extern std::vector<uint64_t> restore_ids;
+
     void init();
     void reset();
     uint8_t alive();
@@ -63,12 +68,13 @@ namespace Game {
     void render_game();
     void render_title_screen();
     void send_inputs();
-    void spawn_in();
+    void spawn_in(uint64_t = 0);
     void delete_petal(uint8_t);
     void swap_petals(uint8_t, uint8_t);
     void swap_all_petals();
     void send_chat(std::string const &);
     void switch_gamemode(uint8_t);
+    void save_progress();
     void on_message(uint8_t *, uint32_t);
     void poll_ui_event(Ui::ScreenEvent const &);
 };

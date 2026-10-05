@@ -3,7 +3,7 @@
 #include <Shared/StaticDefinitions.hh>
 
 #include <cstdint>
-#include <set>
+#include <vector>
 
 class Client;
 
@@ -24,7 +24,8 @@ typedef uint16_t game_tick_t;
     COMPONENT(Name) \
     COMPONENT(Chat) \
     COMPONENT(Dot) \
-    COMPONENT(Animation)
+    COMPONENT(Animation) \
+    COMPONENT(Progress)
 
 #define PERFIELD \
 FIELDS_Physics \
@@ -41,7 +42,8 @@ FIELDS_Score \
 FIELDS_Name \
 FIELDS_Chat \
 FIELDS_Dot \
-FIELDS_Animation
+FIELDS_Animation \
+FIELDS_Progress
 
 #define FIELDS_Physics \
 SINGLE(Physics, x, Float) \
@@ -57,7 +59,8 @@ SINGLE(Camera, killed_by, std::string) \
 SINGLE(Camera, camera_x, Float) \
 SINGLE(Camera, camera_y, Float) \
 SINGLE(Camera, fov, Float) \
-SINGLE(Camera, recovery_id, uint64_t)
+SINGLE(Camera, recovery_id, uint64_t) \
+SINGLE(Camera, saving_progress, uint8_t)
 
 #define FIELDS_Relations \
 SINGLE(Relations, team, EntityID) \
@@ -66,7 +69,8 @@ SINGLE(Relations, color, uint8_t) \
 SINGLE(Relations, dev, uint8_t)
 
 #define FIELDS_Flower \
-SINGLE(Flower, overlevel_timer, float) \
+SINGLE(Flower, overlevel_timer, Float) \
+SINGLE(Flower, saving_timer, Float) \
 SINGLE(Flower, loadout_count, uint8_t) \
 SINGLE(Flower, face_flags, uint8_t) \
 SINGLE(Flower, equip_flags, uint8_t) \
@@ -111,6 +115,10 @@ SINGLE(Chat, text, std::string)
 
 #define FIELDS_Animation \
 SINGLE(Animation, anim_type, uint8_t)
+
+#define FIELDS_Progress \
+SINGLE(Progress, restore_id, uint64_t) \
+MULTIPLE(Progress, saved_loadout, PetalID::T, 2 * MAX_SLOT_COUNT)
 
 #ifdef SERVERSIDE
 #define PER_EXTRA_FIELD \
@@ -169,7 +177,8 @@ SINGLE(Animation, anim_type, uint8_t)
     SINGLE(chat_sent, EntityID, =NULL_ENTITY) \
     SINGLE(chat_pos, uint8_t, =0) \
     \
-    SINGLE(minimap_dots, std::set<EntityID>, ={})
+    SINGLE(minimap_dots, std::vector<EntityID>, ={}) \
+    SINGLE(progress_saves, std::vector<EntityID>, ={})
 #else
 #define PER_EXTRA_FIELD \
     SINGLE(last_damaged_time, double, =0) \

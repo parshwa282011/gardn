@@ -86,5 +86,5 @@ namespace Ui {
         virtual void poll_events(ScreenEvent const &);
     };
 
-    std::vector<Element *> const make_range(uint32_t, uint32_t, Element *(uint32_t));
+    std::vector<Element *> const make_range(uint32_t, uint32_t, std::function<Element *(uint32_t)>);
 }

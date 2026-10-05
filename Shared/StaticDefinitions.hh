@@ -21,6 +21,12 @@ inline uint32_t const FIRE_ANT_COUNT = 20;
 inline uint32_t const MAX_LIGHTNING_BOUNCES = 15;
 inline uint32_t const MAX_SPONGE_PERIOD = 10 * TPS;
 
+inline uint32_t const MAX_NAME_LENGTH = 16;
+inline uint32_t const MAX_CHAT_LENGTH = 64;
+inline uint32_t const MAX_DEV_PWD_LENGTH = 28;
+// constrained by StorageProtocol::MAX_LENGTH and sizeof(OUTGOING_PACKET)
+inline uint32_t const MAX_PROGRESS_SAVES = 100;
+
 namespace DamageType {
     enum : uint8_t {
         kPassive,
@@ -337,4 +343,10 @@ struct ZoneDefinition {
     uint32_t difficulty;
     uint32_t color;
     char const *name;
+};
+
+struct PlayerProgress {
+    uint64_t restore_id;
+    uint32_t score;
+    std::array<PetalID::T, 2 * MAX_SLOT_COUNT> loadout;
 };

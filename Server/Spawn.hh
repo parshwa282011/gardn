@@ -16,6 +16,7 @@ Entity &alloc_petal(Simulation *, PetalID::T, Entity const &);
 Entity &alloc_web(Simulation *, float, Entity const &);
 Entity &alloc_chat(Simulation *, std::string &, Entity const &);
 Entity &alloc_dot(Simulation *, Entity const &);
+Entity &alloc_progress(Simulation *, struct PlayerProgress &, Entity const &);
 Entity &alloc_camera(Simulation *, EntityID const);
 Entity &alloc_cpu_camera(Simulation *, EntityID const);
 

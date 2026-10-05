@@ -3,6 +3,7 @@
 #include <cmath>
 
 float const PETAL_DISABLE_DELAY = 45.0f; //seconds
+float const PROGRESS_SAVE_DELAY = 90.0f;
 float const PLAYER_ACCELERATION = 5.0f;
 float const DEFAULT_FRICTION = 1.0f/3.0f;
 float const LIGHTNING_STRIKE_RADIUS = 300.0f;

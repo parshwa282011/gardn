@@ -41,6 +41,6 @@ void TeamManager::tick() {
         } else
             sim->request_delete(ent.id);
         Entity &team = sim->get_ent(ent.get_team());
-        team.minimap_dots.insert(ent.id);
+        team.minimap_dots.push_back(ent.id);
     });
 }

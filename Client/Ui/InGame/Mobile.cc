@@ -72,19 +72,19 @@ Element *Ui::make_mobile_attack_button() {
 }
 
 Element *Ui::make_mobile_defend_button() {
-    Element *elt = new Ui::Button(150, 150, new Ui::StaticText(37.5, "B"), 
+    Element *elt = new Ui::Button(125, 125, new Ui::StaticText(31.25, "B"), 
         [](Element *elt, uint8_t e) {
             if (e == Ui::kMouseDown)
                 BitMath::set(Input::game_inputs.flags, InputFlags::kDefending);
             else if (e == Ui::kClick)
                 BitMath::unset(Input::game_inputs.flags, InputFlags::kDefending);
-        }, nullptr, { .fill = 0x40000000, .line_width = 0, .round_radius = 37.5, 
+        }, nullptr, { .fill = 0x40000000, .line_width = 0, .round_radius = 31.25, 
             .should_render = [](){ return Input::is_mobile && Game::alive(); },
             .h_justify = Style::Right, .v_justify = Style::Bottom,
             .no_animation = 1
         }
     );
-    elt->x = -150;
+    elt->x = -200;
     elt->y = -200;
     return elt;
 }
@@ -100,7 +100,7 @@ Element *Ui::make_mobile_swap_all_button() {
             .no_animation = 1
         }
     );
-    elt->x = -50;
+    elt->x = -125;
     elt->y = -200;
     return elt;
 }
@@ -118,7 +118,7 @@ Element *Ui::make_mobile_chat_button() {
             .no_animation = 1
         }
     );
-    elt->x = -50;
+    elt->x = -125;
     elt->y = -275;
     return elt;
 }
@@ -135,7 +135,23 @@ Element *Ui::make_mobile_fullscreen_button() {
         }
     );
     elt->x = -50;
-    elt->y = -350;
+    elt->y = -275;
+    return elt;
+}
+
+Element *Ui::make_mobile_save_progress_button() {
+    Element *elt = new Ui::Button(50, 50, new Ui::StaticText(12.5, "S"), 
+        [](Element *elt, uint8_t e) {
+            if (e == Ui::kClick)
+                Game::save_progress();
+        }, nullptr, { .fill = 0x40000000, .line_width = 0, .round_radius = 12.5, 
+            .should_render = [](){ return Input::is_mobile && Game::alive(); },
+            .h_justify = Style::Right, .v_justify = Style::Bottom,
+            .no_animation = 1
+        }
+    );
+    elt->x = -50;
+    elt->y = -200;
     return elt;
 }
 

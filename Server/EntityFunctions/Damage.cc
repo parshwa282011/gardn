@@ -117,8 +117,11 @@ void inflict_damage(Simulation *sim, EntityID const atk_id, EntityID const def_i
             defender.immunity_ticks = 1.0 * TPS;
             for (uint32_t i = 0; i < MAX_SPONGE_PERIOD; ++i)
                 defender.delayed_damage[i] = 0;
-        }
+        } else
+            sim->get_ent(defender.get_parent()).set_saving_progress(0);
     }
+    if (defender.has_component(kFlower) && type != DamageType::kPassive)
+        defender.set_saving_timer(fclamp(defender.get_saving_timer() - 10 * damage_dealt, 0, PROGRESS_SAVE_DELAY * TPS));
     if (!sim->ent_exists(atk_id)) return;
     Entity &attacker = sim->get_ent(atk_id);
 
