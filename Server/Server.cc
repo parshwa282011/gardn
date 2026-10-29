@@ -18,7 +18,7 @@ namespace Server {
         GameInstance(Gamemode::kTDM)
     };
     std::array<uint32_t, PetalID::kNumPetals> petal_count_tracker = {0};
-    std::unordered_map<uint64_t, struct PlayerProgress> progress_saves = {};
+    std::unordered_map<std::string, AccountSaves> account_saves = {};
     volatile sig_atomic_t is_draining = false;
     bool is_stopping = false;
     uint32_t player_count = 0;

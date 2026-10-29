@@ -26,7 +26,9 @@ enum CloseReason {
     kServer = 4001,
     kProtocol = 4002,
     kOutdated = 4003,
-    kRecovered = 4004
+    kRecovered = 4004,
+    kExpired = 4005,      // PL-P older than a week: log in again
+    kUnauthorized = 4006  // uuid / PL-P not accepted by the master
 };
 
 class Writer {

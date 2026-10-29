@@ -24,6 +24,8 @@ inline uint32_t const MAX_SPONGE_PERIOD = 10 * TPS;
 inline uint32_t const MAX_NAME_LENGTH = 16;
 inline uint32_t const MAX_CHAT_LENGTH = 64;
 inline uint32_t const MAX_DEV_PWD_LENGTH = 28;
+inline uint32_t const MAX_UUID_LENGTH = 36;
+inline uint32_t const MAX_PLP_LENGTH = 200;
 // constrained by StorageProtocol::MAX_LENGTH and sizeof(OUTGOING_PACKET)
 inline uint32_t const MAX_PROGRESS_SAVES = 100;
 

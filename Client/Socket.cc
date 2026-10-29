@@ -13,6 +13,20 @@
 uint8_t INCOMING_PACKET[64 * 1024] = {0};
 uint8_t OUTGOING_PACKET[1 * 1024] = {0};
 
+// The rrolf login keeps "uuid" and "PL-P" in localStorage; gardn is served from
+// the same origin, so it can show them to its server. Empty when logged out.
+static std::string local_storage(char const *key) {
+    char buffer[256] = {0};
+    EM_ASM({
+        const value = window.localStorage[UTF8ToString($0)] || "";
+        const bytes = new TextEncoder().encode(value);
+        const n = Math.min(bytes.length, $2 - 1);
+        HEAPU8.set(bytes.subarray(0, n), $1);
+        HEAPU8[$1 + n] = 0;
+    }, key, buffer, sizeof buffer);
+    return std::string(buffer);
+}
+
 extern "C" {
     void on_message(uint8_t type, uint32_t len, char *reason) {
         if (type == 0) {
@@ -22,9 +36,8 @@ extern "C" {
             w.write<uint64_t>(VERSION_HASH);
             w.write<uint64_t>(Game::recovery_id);
             w.write<uint8_t>(Game::gamemode);
-            for (uint32_t i = 0; i < Game::restore_ids.size() && i < MAX_PROGRESS_SAVES; ++i)
-                w.write<uint64_t>(Game::restore_ids[i]);
-            w.write<uint64_t>(0);
+            w.write<std::string>(local_storage("uuid"));
+            w.write<std::string>(local_storage("PL-P"));
             Game::socket.ready = 1; //force send
             Game::socket.send(w.packet, w.at - w.packet);
             Game::socket.ready = 0;
@@ -33,7 +46,11 @@ extern "C" {
             Game::on_game_screen = 0;
             Game::socket.ready = 0;
             std::printf("Disconnected [%d](%s)\n", len, reason);
-            if (std::strlen(reason))
+            if (len == CloseReason::kExpired)
+                Game::disconnect_message = "Your login expired. Open the main page and log in again.";
+            else if (len == CloseReason::kUnauthorized)
+                Game::disconnect_message = "Not logged in. Open the main page and log in.";
+            else if (std::strlen(reason))
                 Game::disconnect_message = std::format("Disconnected with code {} ({})", len, reason);
             else
                 Game::disconnect_message = std::format("Disconnected with code {}", len);

@@ -152,8 +152,7 @@ public:
     X(5, Game::recovery_id) \
     X(6, Game::seen_changelog) \
     X(7, Game::auto_delete) \
-    X(8, Game::gamemode) \
-    X(9, Game::restore_ids)
+    X(8, Game::gamemode)
 
 #define X(ct, name) static auto checker_##ct = MutationObserver(name);
 STORED
@@ -222,15 +221,6 @@ void Storage::retrieve() {
         }
     }
     {
-        uint32_t len = StorageProtocol::retrieve("restore_ids", StorageProtocol::MAX_LENGTH);
-        Decoder reader(&StorageProtocol::buffer[0]);
-        while (reader.at < StorageProtocol::buffer + len && Game::restore_ids.size() < MAX_PROGRESS_SAVES) {
-            uint64_t restore_id = reader.read<uint64_t>();
-            if (restore_id == 0) break;
-            Game::restore_ids.push_back(restore_id);
-        }
-    }
-    {
         uint32_t len = StorageProtocol::retrieve("dev", sizeof(uint32_t) * MAX_DEV_PWD_LENGTH + 4);
         if (len > 0 && len <= sizeof(uint32_t) * MAX_DEV_PWD_LENGTH + 4) {
             Decoder reader(&StorageProtocol::buffer[0]);
@@ -290,11 +280,5 @@ void Storage::set() {
         Encoder writer(&StorageProtocol::buffer[0]);
         writer.write<uint8_t>(Game::gamemode);
         StorageProtocol::store("gamemode", writer.at - writer.base);
-    }
-    {
-        Encoder writer(&StorageProtocol::buffer[0]);
-        for (uint32_t i = 0; i < Game::restore_ids.size() && i < MAX_PROGRESS_SAVES; ++i)
-            writer.write<uint64_t>(Game::restore_ids[i]);
-        StorageProtocol::store("restore_ids", writer.at - writer.base);
     }
 }

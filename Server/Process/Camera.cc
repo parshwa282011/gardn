@@ -52,7 +52,8 @@ void tick_camera_behavior(Simulation *sim, Entity &ent) {
                 break;
             }
         }
-        if (player.get_saving_timer() == 0 || ent.progress_saves.size() >= MAX_PROGRESS_SAVES ||
+        if (ent.client == nullptr || ent.client->account_uuid.empty() ||
+            player.get_saving_timer() == 0 || ent.progress_saves.size() >= MAX_PROGRESS_SAVES ||
             (score_to_level(player.get_score()) < 45 && !has_legendary))
             ent.set_saving_progress(0);
         player.set_saving_timer(fclamp(player.get_saving_timer() + (saving_penalty ? -10 : 1), 0, PROGRESS_SAVE_DELAY * TPS));

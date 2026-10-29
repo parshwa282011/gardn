@@ -21,5 +21,5 @@ public:
     void remove_client(Client *);
     void save_progress(Client *);
     uint32_t restore_progress(Client *, uint64_t);
-    void find_progress_saves(Client *, std::vector<uint64_t>);
+    void find_progress_saves(Client *);
 };

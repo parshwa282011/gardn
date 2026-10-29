@@ -25,8 +25,16 @@ public:
     WebSocket *ws;
     uint8_t verified = 0;
     uint8_t seen_arena = 0;
+    // account (empty uuid = anonymous: can play, cannot save progress)
+    std::string account_uuid;
+    uint8_t verifying = 0;      // waiting for the master to answer
+    uint8_t account_counted = 0;
+    uint64_t pending_recovery_id = 0;
+    uint8_t pending_gamemode = 0;
     Client();
-    void init(uint64_t, uint8_t, std::vector<uint64_t>);
+    void init(uint64_t, uint8_t);
+    // status: 1 accepted, 2 PL-P expired, 3 master unreachable, else refused
+    void on_account(uint8_t status, std::vector<struct PlayerProgress> &saves);
     void move(GameInstance *);
     void remove();
     void disconnect(int = CloseReason::kProtocol, std::string const & = "Protocol Error");
@@ -48,6 +56,7 @@ public:
     Client client;
     WebSocket(int);
     Client *getUserData();
+    int id() const { return ws_id; }
     void send(uint8_t const *, size_t);
     void end(int, std::string const &);
 };

@@ -56,7 +56,6 @@ namespace Game {
 
     extern uint8_t can_restore;
     extern std::vector<struct PlayerProgress> progress_saves;
-    extern std::vector<uint64_t> restore_ids;
 
     void init();
     void reset();

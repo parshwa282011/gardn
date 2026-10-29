@@ -2,6 +2,7 @@
 
 #include <Server/EntityFunctions.hh>
 #include <Server/Game.hh>
+#include <Server/Master.hh>
 #include <Server/PetalTracker.hh>
 #include <Server/Server.hh>
 #include <Server/Spawn.hh>
@@ -16,7 +17,7 @@
 
 Client::Client() : game(nullptr) {}
 
-void Client::init(uint64_t recovery_id, uint8_t gamemode, std::vector<uint64_t> restore_ids) {
+void Client::init(uint64_t recovery_id, uint8_t gamemode) {
     DEBUG_ONLY(assert(game == nullptr);)
     DEBUG_ONLY(recovery_id = 0;)
     EntityID camera_id = NULL_ENTITY;
@@ -35,18 +36,15 @@ void Client::init(uint64_t recovery_id, uint8_t gamemode, std::vector<uint64_t> 
     }
     Server::games[gamemode].add_client(this, camera_id);
     if (camera_id == NULL_ENTITY)
-        game->find_progress_saves(this, restore_ids);
+        game->find_progress_saves(this);
 }
 
 void Client::move(GameInstance *new_game) {
     if (game == new_game) return;
     Entity &old_camera = game->simulation.get_ent(camera);
-    std::vector<uint64_t> restore_ids;
-    for (EntityID id : old_camera.progress_saves)
-        restore_ids.push_back(game->simulation.get_ent(id).get_restore_id());
     game->simulation.request_delete(camera);
     new_game->add_client(this, NULL_ENTITY);
-    game->find_progress_saves(this, restore_ids);
+    game->find_progress_saves(this);
     Entity &new_camera = game->simulation.get_ent(camera);
     new_camera.set_respawn_level(old_camera.get_respawn_level());
     for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i) {
@@ -86,6 +84,7 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
         ws->end(CloseReason::kServer, "Server Error");
         return;
     }
+    if (client->verifying) return; // the master is checking the account
     if (!client->verified) {
         if (client->check_invalid(
             validator.validate_uint8() &&
@@ -101,22 +100,31 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
         }
         if (client->check_invalid(
             validator.validate_uint64() &&
-            validator.validate_uint8() &&
-            validator.validate_uint64()
+            validator.validate_uint8()
         )) return;
         uint64_t recovery_id = reader.read<uint64_t>();
         uint8_t gamemode = reader.read<uint8_t>();
         if (client->check_invalid(gamemode < Gamemode::kNumGamemodes)) return;
-        std::vector<uint64_t> restore_ids;
-        uint64_t restore_id = reader.read<uint64_t>();
-        while (restore_id != 0) {
-            if (client->check_invalid(restore_ids.size() < MAX_PROGRESS_SAVES)) return;
-            restore_ids.push_back(restore_id);
-            if (client->check_invalid(validator.validate_uint64())) return;
-            restore_id = reader.read<uint64_t>();
+        // who is playing: the uuid and PL-P from the rrolf login (localStorage
+        // on the shared origin). Both empty = anonymous.
+        if (client->check_invalid(validator.validate_string(MAX_UUID_LENGTH))) return;
+        std::string uuid;
+        reader.read<std::string>(uuid);
+        if (client->check_invalid(validator.validate_string(MAX_PLP_LENGTH))) return;
+        std::string pl_p;
+        reader.read<std::string>(pl_p);
+#ifdef WASM_SERVER
+        if (!uuid.empty()) {
+            client->verifying = 1;
+            client->account_uuid = uuid;
+            client->pending_recovery_id = recovery_id;
+            client->pending_gamemode = gamemode;
+            Master::request_account(ws->id(), uuid, pl_p);
+            return;
         }
+#endif
         client->verified = 1;
-        client->init(recovery_id, gamemode, restore_ids);
+        client->init(recovery_id, gamemode);
         return;
     }
     if (client->game == nullptr) {
@@ -236,6 +244,7 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
         }
         case Serverbound::kProgressSave: {
             if (!client->alive()) break;
+            if (client->account_uuid.empty()) break;
             Simulation *simulation = &client->game->simulation;
             Entity &camera = simulation->get_ent(client->camera);
             if (!simulation->ent_alive(camera.get_player())) break;
@@ -250,6 +259,26 @@ void Client::on_disconnect(WebSocket *ws, int code, std::string_view message) {
     Client *client = ws->getUserData();
     if (client == nullptr) return;
     client->remove();
+    if (client->account_counted) {
+        client->account_counted = 0;
+        auto account = Server::account_saves.find(client->account_uuid);
+        if (account != Server::account_saves.end() && --account->second.clients == 0)
+            Server::account_saves.erase(account);
+    }
+}
+
+void Client::on_account(uint8_t status, std::vector<PlayerProgress> &saves) {
+    verifying = 0;
+    if (status == 2) { disconnect(CloseReason::kExpired, "Session Expired"); return; }
+    if (status == 3) { disconnect(CloseReason::kServer, "Server Error"); return; }
+    if (status != 1) { disconnect(CloseReason::kUnauthorized, "Not Logged In"); return; }
+    Server::AccountSaves &account = Server::account_saves[account_uuid];
+    // another connection of this account already holds the live list
+    if (account.clients == 0) account.saves = std::move(saves);
+    ++account.clients;
+    account_counted = 1;
+    verified = 1;
+    init(pending_recovery_id, pending_gamemode);
 }
 
 bool Client::check_invalid(bool valid) {

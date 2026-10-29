@@ -65,7 +65,6 @@ namespace Game {
 
     uint8_t can_restore = 0;
     std::vector<struct PlayerProgress> progress_saves;
-    std::vector<uint64_t> restore_ids;
 }
 
 using namespace Game;
@@ -297,13 +296,11 @@ void Game::tick(double time) {
             }
 
             progress_saves.clear();
-            restore_ids.clear();
             simulation.for_each<kProgress>([](Simulation *sim, Entity &ent){
                 std::array<PetalID::T, 2 * MAX_SLOT_COUNT> loadout;
                 for (uint8_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
                     loadout[i] = ent.get_saved_loadout(i);
                 progress_saves.push_back({ .restore_id = ent.get_restore_id(), .score = ent.get_score(), .loadout = loadout });
-                restore_ids.push_back(ent.get_restore_id());
             });
 
             std::sort(progress_saves.begin(), progress_saves.end(), [](PlayerProgress &a, PlayerProgress &b){

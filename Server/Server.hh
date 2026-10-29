@@ -23,7 +23,14 @@ namespace Server {
     extern uint8_t OUTGOING_PACKET[MAX_PACKET_LEN];
     extern std::array<GameInstance, Gamemode::kNumGamemodes> games;
     extern std::array<uint32_t, PetalID::kNumPetals> petal_count_tracker;
-    extern std::unordered_map<uint64_t, struct PlayerProgress> progress_saves;
+    // Progress saves belong to accounts. An entry exists while at least one of
+    // the account's clients is connected; unflushed changes live in the host
+    // (see Master.hh), which flushes before the next load.
+    struct AccountSaves {
+        std::vector<struct PlayerProgress> saves;
+        uint32_t clients = 0;
+    };
+    extern std::unordered_map<std::string, AccountSaves> account_saves;
     #ifdef WASM_SERVER
     extern WebSocketServer server;
     #endif

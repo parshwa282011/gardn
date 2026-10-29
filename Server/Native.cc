@@ -89,6 +89,14 @@ void Server::stop() {
     us_timer_close(delayTimer);
 }
 
+// The native server has no master link: players are anonymous and cannot save.
+#include <Server/Master.hh>
+void Master::init() {}
+void Master::request_account(int, std::string const &, std::string const &) {}
+void Master::queue_add(std::string const &, PlayerProgress const &) {}
+void Master::queue_remove(std::string const &, uint64_t) {}
+void Master::flush() {}
+
 void Client::send_packet(uint8_t const *packet, size_t size) {
     if (ws == nullptr) return;
     std::string_view message(reinterpret_cast<char const *>(packet), size);
