@@ -47,18 +47,27 @@
     <div id="font-loader" style="font-family: Ubuntu;">hello!</div>
     <canvas id="canvas" width="0" height="0"></canvas>
     <script>
+        // The names here are global in the page, and so are the names of the minified
+        // gardn-client.js that is loaded next: a plain "v" here clashed with its own
+        // top level "v" ("Identifier 'v' has already been declared"), the script never ran
+        // and the error handler reloaded the page for ever. Keep these names unlikely.
         const versionHash = '0';
-        const v = localStorage['version_hash'] || versionHash;
+        const gardnPageV = localStorage['version_hash'] || versionHash;
         var Module = {};
-        Module.locateFile = (file, prefix) => prefix + file + '?v=' + v;
+        Module.locateFile = (file, prefix) => prefix + file + '?v=' + gardnPageV;
         window.onerror = window.onunhandledrejection = () => {
             if (versionHash === '0') return;
+            // an outdated page reloads to get the new one, but only once every ten
+            // seconds: a real error must not turn into a reload loop
+            const last = Number(window.sessionStorage['gardn_reload'] || 0);
+            if (Date.now() - last < 10000) return;
+            window.sessionStorage['gardn_reload'] = String(Date.now());
             delete window.localStorage['version_hash'];
             window.location.reload();
         };
         document.addEventListener("DOMContentLoaded", () => {
             const script = document.createElement('script');
-            script.src = 'gardn-client.js?v=' + v;
+            script.src = 'gardn-client.js?v=' + gardnPageV;
             script.async = true;
             document.body.appendChild(script);
         });
