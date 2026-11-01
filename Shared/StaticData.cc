@@ -934,7 +934,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     },
     {
         .name = "Butterfly",
-        .description = "Increases drop pickup range",
+        .description = "Heals and shields passively by stealing a little butterfly's power",
         .health = 0.0,
         .damage = 1.0,
         .radius = 10.0,
