@@ -935,15 +935,15 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     {
         .name = "Butterfly",
         .description = "Heals and shields passively by stealing a little butterfly's power",
-        .health = 0.0,
+        .health = 10.0,
         .damage = 1.0,
         .radius = 10.0,
-        .reload = 1.5,
+        .reload = 5,
         .count = 1,
         .rarity = RarityID::kMythic,
         .attributes = {
-            .constant_heal = 20,
-            .constant_sheild = 20,
+            .constant_heal = 3,
+            .constant_sheild = 1.5,
             .defend_only = 1
         }
     },
