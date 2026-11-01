@@ -942,8 +942,8 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
         .count = 1,
         .rarity = RarityID::kMythic,
         .attributes = {
-            .constant_heal = 3,
-            .constant_sheild = 1.5,
+            .constant_heal = 2,
+            .constant_sheild = 2,
             .defend_only = 1
         }
     },
