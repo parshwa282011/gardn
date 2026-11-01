@@ -19,6 +19,11 @@ namespace Master {
     void request_account(int ws_id, std::string const &uuid, std::string const &pl_p);
     void queue_add(std::string const &uuid, struct PlayerProgress const &);
     void queue_remove(std::string const &uuid, uint64_t restore_id);
+    // for the leaderboards (rrolf/MasterServer/c/leaderboard.c): a kill made by
+    // this account, and what the account's saves add up to (Mythic petals in
+    // all of them, the best score). They go to the master with the saves.
+    void add_kill(std::string const &uuid);
+    void set_stats(std::string const &uuid, uint32_t mythics, uint32_t best_score);
     // send everything pending now (shutdown); the host keeps the process alive
     // until the request finishes
     void flush();

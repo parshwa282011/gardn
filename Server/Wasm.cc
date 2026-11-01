@@ -294,7 +294,7 @@ EM_JS(void, master_init_js, (), {
         };
         M.entry = function(uuid) {
             let e = M.pending.get(uuid);
-            if (!e) { e = { add: new Map(), remove: new Set(), tries: 0 }; M.pending.set(uuid, e); }
+            if (!e) { e = { add: new Map(), remove: new Set(), tries: 0, kills: 0, stats: null }; M.pending.set(uuid, e); }
             return e;
         };
         /* put changes back after a failed send (newer changes win) */
@@ -305,6 +305,8 @@ EM_JS(void, master_init_js, (), {
             }
             const cur = M.entry(uuid);
             cur.tries = Math.max(cur.tries, old.tries);
+            cur.kills += old.kills;
+            if (!cur.stats) cur.stats = old.stats;
             old.add.forEach(function(save, id) {
                 if (!cur.remove.has(id) && !cur.add.has(id)) cur.add.set(id, save);
             });
@@ -318,7 +320,11 @@ EM_JS(void, master_init_js, (), {
                 if (!taken.length) return;
                 taken.forEach(function(t) { M.pending.delete(t[0]); });
                 const changes = taken.map(function(t) {
-                    return { "uuid": t[0], "add": Array.from(t[1].add.values()), "remove": Array.from(t[1].remove) };
+                    const c = { "uuid": t[0], "add": Array.from(t[1].add.values()), "remove": Array.from(t[1].remove) };
+                    /* what the leaderboards need: kills since the last report, and what the saves add up to */
+                    if (t[1].kills) c["kills"] = t[1].kills;
+                    if (t[1].stats) { c["mythics"] = t[1].stats["mythics"]; c["best_score"] = t[1].stats["best"]; }
+                    return c;
                 });
                 let status = 0, j = {};
                 try { [status, j] = await M.call("/srv/gardn/flush", { "changes": changes }); }
@@ -391,6 +397,16 @@ void Master::queue_remove(std::string const &uuid, uint64_t restore_id) {
         e.add.delete(id);
         e.remove.add(id);
     }, uuid.c_str(), static_cast<uint32_t>(restore_id >> 32), static_cast<uint32_t>(restore_id & 0xffffffffu));
+}
+
+void Master::add_kill(std::string const &uuid) {
+    EM_ASM({ Module.master.entry(UTF8ToString($0)).kills++; }, uuid.c_str());
+}
+
+void Master::set_stats(std::string const &uuid, uint32_t mythics, uint32_t best_score) {
+    EM_ASM({
+        Module.master.entry(UTF8ToString($0)).stats = ({ "mythics": $1 >>> 0, "best": $2 >>> 0 });
+    }, uuid.c_str(), mythics, best_score);
 }
 
 void Master::flush() {

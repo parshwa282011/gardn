@@ -146,6 +146,7 @@ void GameInstance::save_progress(Client *client) {
     struct PlayerProgress progress = { .restore_id = restore_id, .score = player.get_score(), .loadout = loadout };
     Server::account_saves[client->account_uuid].saves.push_back(progress);
     Master::queue_add(client->account_uuid, progress);
+    Server::report_stats(client->account_uuid);
     DEBUG_ONLY(assert(camera.progress_saves.size() < MAX_PROGRESS_SAVES);)
     camera.progress_saves.push_back(alloc_progress(&simulation, progress, camera).id);
 }
@@ -174,6 +175,7 @@ uint32_t GameInstance::restore_progress(Client *client, uint64_t restore_id) {
 
     saves.erase(iter);
     Master::queue_remove(client->account_uuid, restore_id);
+    Server::report_stats(client->account_uuid);
     simulation.for_each<kProgress>([=](Simulation *sim, Entity &ent){
         if (ent.get_restore_id() == restore_id) {
             sim->request_delete(ent.id);

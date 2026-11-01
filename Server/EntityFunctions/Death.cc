@@ -1,5 +1,7 @@
 #include <Server/EntityFunctions.hh>
 
+#include <Server/Client.hh>
+#include <Server/Master.hh>
 #include <Server/PetalTracker.hh>
 #include <Server/Server.hh>
 #include <Server/Spawn.hh>
@@ -47,11 +49,23 @@ static void _add_score(Simulation *sim, EntityID const killer_id, Entity const &
         killer.set_score(killer.get_score() + target.score_reward);
 }
 
+// a kill of a logged in player's flower, for the leaderboards
+static void _add_kill(Simulation *sim, EntityID const killer_id, Entity const &target) {
+    if (!sim->ent_exists(killer_id) || killer_id == target.id) return;
+    Entity const &killer = sim->get_ent(killer_id);
+    if (!killer.has_component(kFlower) || !sim->ent_exists(killer.get_parent())) return;
+    Entity const &camera = sim->get_ent(killer.get_parent());
+    if (camera.client == nullptr || camera.client->account_uuid.empty()) return;
+    Master::add_kill(camera.client->account_uuid);
+}
+
 void entity_on_death(Simulation *sim, Entity const &ent) {
     //don't do on_death for any despawned entity
     uint8_t natural_despawn = BitMath::at(ent.flags, EntityFlags::kIsDespawning) && ent.despawn_tick == 0;
-    if (ent.score_reward > 0 && !natural_despawn)
+    if (ent.score_reward > 0 && !natural_despawn) {
         _add_score(sim, ent.last_damaged_by, ent);
+        _add_kill(sim, ent.last_damaged_by, ent);
+    }
     if (ent.has_component(kFlower) && sim->ent_alive(ent.get_parent())) {
         Entity &camera = sim->get_ent(ent.get_parent());
         if (sim->ent_exists(ent.last_damaged_by)) {

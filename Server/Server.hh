@@ -34,6 +34,8 @@ namespace Server {
     #ifdef WASM_SERVER
     extern WebSocketServer server;
     #endif
+    // tells the master what this account's saves add up to (leaderboards)
+    extern void report_stats(std::string const &uuid);
     extern volatile sig_atomic_t is_draining;
     extern bool is_stopping;
     extern uint32_t player_count;

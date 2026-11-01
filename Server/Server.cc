@@ -2,6 +2,7 @@
 
 #include <Server/Game.hh>
 #include <Server/Client.hh>
+#include <Server/Master.hh>
 #include <Server/PetalTracker.hh>
 
 #include <Shared/Binary.hh>
@@ -19,6 +20,18 @@ namespace Server {
     };
     std::array<uint32_t, PetalID::kNumPetals> petal_count_tracker = {0};
     std::unordered_map<std::string, AccountSaves> account_saves = {};
+
+    void report_stats(std::string const &uuid) {
+        auto account = account_saves.find(uuid);
+        if (account == account_saves.end()) return;
+        uint32_t mythics = 0, best = 0;
+        for (PlayerProgress const &progress : account->second.saves) {
+            if (progress.score > best) best = progress.score;
+            for (PetalID::T id : progress.loadout)
+                if (id != PetalID::kNone && PETAL_DATA[id].rarity == RarityID::kMythic) ++mythics;
+        }
+        Master::set_stats(uuid, mythics, best);
+    }
     volatile sig_atomic_t is_draining = false;
     bool is_stopping = false;
     uint32_t player_count = 0;

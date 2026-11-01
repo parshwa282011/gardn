@@ -278,6 +278,7 @@ void Client::on_account(uint8_t status, std::vector<PlayerProgress> &saves) {
     ++account.clients;
     account_counted = 1;
     verified = 1;
+    Server::report_stats(account_uuid);
     init(pending_recovery_id, pending_gamemode);
 }
 
