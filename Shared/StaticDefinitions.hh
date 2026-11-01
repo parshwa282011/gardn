@@ -117,6 +117,7 @@ namespace PetalID {
         kSponge,
         kHoney,
         kMagnet,
+        kButterfly,
         kNumPetals
     };
 };
@@ -284,6 +285,7 @@ struct PetalAttributes {
     float speed_factor = 1;
     float health_factor = 1;
     float burst_shield = 0;
+    float constant_sheild = 0;
     float period = 0;
     float pickup_range = 0;
     struct PoisonDamage poison_damage;

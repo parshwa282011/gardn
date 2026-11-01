@@ -11,6 +11,7 @@ class EntityID;
 void inflict_damage(Simulation *, EntityID const, EntityID const, float, uint8_t);
 void inflict_lightning(Simulation *, Entity &, Entity &, float, uint32_t);
 void inflict_heal(Simulation *, Entity &, float);
+void inflict_sheild(Simulation *, Entity &, float);
 
 void entity_on_death(Simulation *, Entity const &);
 

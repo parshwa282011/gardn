@@ -12,6 +12,7 @@ struct PlayerBuffs {
     float extra_rot = 0;
     float extra_range = 0;
     float heal = 0;
+    float sheild = 0;
     float vision_factor = 1;
     float extra_health = 0;
     float extra_damage = 0;
@@ -54,6 +55,11 @@ static struct PlayerBuffs _get_petal_passive_buffs(Simulation *sim, Entity &play
         if (!player.loadout[i].already_spawned) continue;
         if (slot_petal_id == PetalID::kLeaf) 
             buffs.heal += attrs.constant_heal / TPS;
+        if (slot_petal_id == PetalID::kButterfly){
+            buffs.heal += attrs.constant_heal / TPS;
+            buffs.sheild += attrs.constant_sheild / TPS;
+        }
+
         else if (slot_petal_id == PetalID::kYucca && BitMath::at(player.input, InputFlags::kDefending) && !BitMath::at(player.input, InputFlags::kAttacking)) 
             buffs.heal += attrs.constant_heal / TPS;
         buffs.extra_rot += attrs.extra_rotation_speed;
@@ -115,6 +121,8 @@ void tick_player_behavior(Simulation *sim, Entity &player) {
     player.health = health_ratio * player.max_health;
     if (buffs.heal > 0)
         inflict_heal(sim, player, buffs.heal);
+    if (buffs.sheild > 0)
+        inflict_sheild(sim, player, buffs.sheild);
     if (buffs.is_poisonous)
         player.poison_damage = {10.0, 2};
     else

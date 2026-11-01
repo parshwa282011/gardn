@@ -196,3 +196,11 @@ void inflict_heal(Simulation *sim, Entity &ent, float amt) {
     if (BitMath::at(ent.flags, EntityFlags::kZombie)) return;
     ent.health = fclamp(ent.health + amt, 0, ent.max_health);
 }
+
+void inflict_sheild(Simulation *, Entity &ent, float amt) {
+    if (ent.pending_delete || ent.health <= 0) return;
+    if (ent.dandy_ticks > 0) return;
+    if (BitMath::at(ent.flags, EntityFlags::kZombie)) return;
+
+    ent.shield += amt;
+}

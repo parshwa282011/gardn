@@ -1154,6 +1154,93 @@ void draw_static_petal_single(PetalID::T id, Renderer &ctx, PetalRenderAttribute
                 ctx.butt_line_cap();
             }
             break;
+        case PetalID::kButterfly: 
+            ctx.set_fill(0xffff80d5);
+            ctx.set_stroke(0xffa83b91);
+            ctx.set_line_width(2.5f);
+
+            // Left upper wing
+            ctx.begin_path();
+            ctx.move_to(-r * 0.15f, -r * 0.08f);
+            ctx.qcurve_to(-r * 0.45f, -r * 1.15f,
+                        -r * 1.0f, -r * 0.75f);
+            ctx.qcurve_to(-r * 1.35f, -r * 0.35f,
+                        -r * 0.15f, r * 0.15f);
+            ctx.fill();
+            ctx.stroke();
+
+            // Right upper wing
+            ctx.begin_path();
+            ctx.move_to(r * 0.15f, -r * 0.08f);
+            ctx.qcurve_to(r * 0.45f, -r * 1.15f,
+                        r * 1.0f, -r * 0.75f);
+            ctx.qcurve_to(r * 1.35f, -r * 0.35f,
+                        r * 0.15f, r * 0.15f);
+            ctx.fill();
+            ctx.stroke();
+
+            // Left lower wing
+            ctx.begin_path();
+            ctx.move_to(-r * 0.12f, r * 0.05f);
+            ctx.qcurve_to(-r * 0.85f, r * 0.15f,
+                        -r * 0.7f, r * 0.85f);
+            ctx.qcurve_to(-r * 0.35f, r * 1.0f,
+                        -r * 0.12f, r * 0.35f);
+            ctx.fill();
+            ctx.stroke();
+
+            // Right lower wing
+            ctx.begin_path();
+            ctx.move_to(r * 0.12f, r * 0.05f);
+            ctx.qcurve_to(r * 0.85f, r * 0.15f,
+                        r * 0.7f, r * 0.85f);
+            ctx.qcurve_to(r * 0.35f, r * 1.0f,
+                        r * 0.12f, r * 0.35f);
+            ctx.fill();
+            ctx.stroke();
+
+            // Butterfly body
+            ctx.set_fill(0xff63305e);
+            ctx.set_stroke(0xff3d1c3b);
+            ctx.set_line_width(2);
+
+            ctx.begin_path();
+            ctx.move_to(0, -r * 0.35f);
+            ctx.qcurve_to(r * 0.13f, 0, 0, r * 0.55f);
+            ctx.qcurve_to(-r * 0.13f, 0, 0, -r * 0.35f);
+            ctx.fill();
+            ctx.stroke();
+
+            // Antennae
+            ctx.begin_path();
+            ctx.move_to(-r * 0.04f, -r * 0.3f);
+            ctx.qcurve_to(-r * 0.25f, -r * 0.65f,
+                        -r * 0.4f, -r * 0.7f);
+
+            ctx.move_to(r * 0.04f, -r * 0.3f);
+            ctx.qcurve_to(r * 0.25f, -r * 0.65f,
+                        r * 0.4f, -r * 0.7f);
+            ctx.stroke();
+
+            // Mythic wing details
+            ctx.set_fill(0xffffe6fa);
+            ctx.begin_path();
+            ctx.arc(-r * 0.65f, -r * 0.48f, r * 0.12f);
+            ctx.fill();
+
+            ctx.begin_path();
+            ctx.arc(r * 0.65f, -r * 0.48f, r * 0.12f);
+            ctx.fill();
+
+            ctx.begin_path();
+            ctx.arc(-r * 0.48f, r * 0.55f, r * 0.09f);
+            ctx.fill();
+
+            ctx.begin_path();
+            ctx.arc(r * 0.48f, r * 0.55f, r * 0.09f);
+            ctx.fill();
+
+            break;
         default:
             assert(id < PetalID::kNumPetals);
             assert(!"didn't cover petal render");

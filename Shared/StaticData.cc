@@ -932,6 +932,21 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
             .icon_angle = -1
         }
     },
+    {
+        .name = "Butterfly",
+        .description = "Increases drop pickup range",
+        .health = 0.0,
+        .damage = 1.0,
+        .radius = 10.0,
+        .reload = 1.5,
+        .count = 1,
+        .rarity = RarityID::kMythic,
+        .attributes = {
+            .constant_heal = 20,
+            .constant_sheild = 20,
+            .defend_only = 1
+        }
+    },
 }};
 
 std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{
@@ -1022,7 +1037,7 @@ std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{
         .radius = {90.0},
         .xp = 400,
         .drops = {
-            PetalID::kRose, PetalID::kDahlia, PetalID::kBubble, PetalID::kAzalea, PetalID::kObserver
+            PetalID::kRose, PetalID::kDahlia, PetalID::kBubble, PetalID::kAzalea, PetalID::kButterfly, PetalID::kObserver
         }, 
         .attributes = {}
     },
