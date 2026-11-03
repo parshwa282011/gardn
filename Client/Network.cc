@@ -115,6 +115,10 @@ void Game::switch_gamemode(uint8_t gamemode) {
 void Game::save_progress() {
     Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
     if (!Game::alive()) return;
+    if (!Game::has_login) {
+        Game::show_notice("Not logged in: saves are off. Log in on the Rysteria page, then open Gardn from its button.");
+        return;
+    }
     writer.write<uint8_t>(Serverbound::kProgressSave);
     socket.send(writer.packet, writer.at - writer.packet);
 }

@@ -93,7 +93,9 @@ if(DEBUG)
         add_link_options(-sALLOW_MEMORY_GROWTH)
     endif()
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -ffast-math -flto --closure=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -ffast-math -flto")
+    # closure is a linker step; as a compile flag emscripten ignores it
+    add_link_options(--closure=1)
 endif()
 
 add_link_options(-sNO_EXIT_RUNTIME -sEXPORTED_RUNTIME_METHODS=stringToNewUTF8)

@@ -125,7 +125,7 @@ void DOM::open_page(char const *url) {
 
 void DOM::update_client(float delay) {
     EM_ASM({
-        delete window.localStorage["version_hash"];
+        try { delete window.localStorage["version_hash"]; } catch (e) {}
         window.onbeforeunload = null;
         setTimeout(() => {
             window.location.reload();
@@ -135,7 +135,7 @@ void DOM::update_client(float delay) {
 
 void DOM::cache_client() {
     EM_ASM({
-        window.localStorage["version_hash"] = $0.toString();
+        try { window.localStorage["version_hash"] = $0.toString(); } catch (e) {}
         window.onerror = window.onunhandledrejection = null;
     }, VERSION_HASH);
 }

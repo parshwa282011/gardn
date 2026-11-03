@@ -15,10 +15,24 @@ uint8_t OUTGOING_PACKET[1 * 1024] = {0};
 
 // The rrolf login keeps "uuid" and "PL-P" in localStorage; gardn is served from
 // the same origin, so it can show them to its server. Empty when logged out.
+// A browser can refuse to give the page its storage (Edge's tracking prevention,
+// private windows, a page inside someone else's frame): reading it then throws.
+// So the login is looked for in three places, none of which can break the page:
+//   1. window.gardnLogin, handed over in the address by the Rysteria page's Gardn
+//      button and removed from the address at once (see public/index.html)
+//   2. localStorage
+//   3. sessionStorage (where index.html keeps the handoff for a reload)
 static std::string local_storage(char const *key) {
     char buffer[256] = {0};
     EM_ASM({
-        const value = window.localStorage[UTF8ToString($0)] || "";
+        const key = UTF8ToString($0);
+        let value = "";
+        try {
+            const h = window.gardnLogin;
+            if (h) value = (key === "uuid" ? h.uuid : h.plp) || "";
+        } catch (e) {}
+        if (!value) try { value = window.localStorage[key] || ""; } catch (e) {}
+        if (!value) try { value = window.sessionStorage["gardn_" + key] || ""; } catch (e) {}
         const bytes = new TextEncoder().encode(value);
         const n = Math.min(bytes.length, $2 - 1);
         HEAPU8.set(bytes.subarray(0, n), $1);
@@ -36,7 +50,9 @@ extern "C" {
             w.write<uint64_t>(VERSION_HASH);
             w.write<uint64_t>(Game::recovery_id);
             w.write<uint8_t>(Game::gamemode);
-            w.write<std::string>(local_storage("uuid"));
+            std::string uuid = local_storage("uuid");
+            Game::has_login = !uuid.empty();
+            w.write<std::string>(uuid);
             w.write<std::string>(local_storage("PL-P"));
             Game::socket.ready = 1; //force send
             Game::socket.send(w.packet, w.at - w.packet);

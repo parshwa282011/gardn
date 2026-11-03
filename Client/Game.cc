@@ -10,6 +10,7 @@
 #include <Shared/Config.hh>
 
 #include <cmath>
+#include <emscripten.h>
 #include <format>
 
 static double g_last_time = 0;
@@ -31,6 +32,9 @@ namespace Game {
     std::string nickname;
     std::string dev_password;
     std::string disconnect_message;
+    uint8_t has_login = 0;
+    std::string notice;
+    double notice_until = 0;
     std::array<uint8_t, PetalID::kNumPetals> seen_petals;
     std::array<uint8_t, MobID::kNumMobs> seen_mobs;
     std::array<PetalID::T, 2 * MAX_SLOT_COUNT> cached_loadout = {PetalID::kNone};
@@ -171,6 +175,21 @@ void Game::init() {
     other_ui_window.add_child(
         Ui::make_debug_stats()
     );
+    // why something did not work, e.g. saving without a login
+    other_ui_window.add_child(
+        [](){
+            Ui::Element *elt = new Ui::HContainer({
+                new Ui::DynamicText(16, [](){ return Game::notice; })
+            }, 5, 5, {
+                .fill = 0x80000000,
+                .round_radius = 5,
+                .should_render = [](){ return Game::timestamp < Game::notice_until; },
+                .v_justify = Ui::Style::Top
+            });
+            elt->y = 90;
+            return elt;
+        }()
+    );
     other_ui_window.add_child(
         [](){ 
             Ui::Element *elt = new Ui::HContainer({
@@ -190,7 +209,25 @@ void Game::init() {
         }()
     );
     other_ui_window.style.no_polling = 1;
-    socket.connect(std::format("{}?v={}", WS_URL, VERSION_HASH));
+    // under /gardn/ on any host the game connects to that same host: a staging
+    // site or localhost works without another build. WS_URL is the fallback
+    char url[256] = {0};
+    EM_ASM({
+        const base = (window.location.pathname.indexOf("/gardn") === 0)
+            ? (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/gardn/"
+            : "";
+        const bytes = new TextEncoder().encode(base);
+        if (bytes.length < $1) {
+            HEAPU8.set(bytes, $0);
+            HEAPU8[$0 + bytes.length] = 0;
+        }
+    }, url, sizeof url);
+    socket.connect(std::format("{}?v={}", url[0] ? std::string(url) : std::string(WS_URL), VERSION_HASH));
+}
+
+void Game::show_notice(std::string const &text) {
+    notice = text;
+    notice_until = timestamp + 5000;
 }
 
 void Game::reset() {

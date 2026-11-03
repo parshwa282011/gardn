@@ -34,14 +34,19 @@ namespace StorageProtocol {
 
     void store(char const *name, uint32_t len) {
         _custom_b16_encode(len);
+        // a browser that refuses storage (tracking prevention, a private window)
+        // throws here: the settings are then just not remembered
         EM_ASM({
-            window.localStorage[Module.TextDecoder.decode(HEAPU8.subarray($0,$0+$1))] = Module.TextDecoder.decode(HEAPU8.subarray($2,$2+$3));
+            try {
+                window.localStorage[Module.TextDecoder.decode(HEAPU8.subarray($0,$0+$1))] = Module.TextDecoder.decode(HEAPU8.subarray($2,$2+$3));
+            } catch (e) {}
         }, name, std::strlen(name), buffer, 2 * len);
     }
 
     uint32_t retrieve(char const *name, uint32_t max_length) {
         uint32_t len = EM_ASM_INT({
-            let a = window.localStorage[Module.TextDecoder.decode(HEAPU8.subarray($0,$0+$1))];
+            let a;
+            try { a = window.localStorage[Module.TextDecoder.decode(HEAPU8.subarray($0,$0+$1))]; } catch (e) { return 0; }
             if (!a) return 0;
             a = a.slice(0, $3);
             HEAPU8.set(new TextEncoder().encode(a), $2);

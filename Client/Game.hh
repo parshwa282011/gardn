@@ -22,6 +22,12 @@ namespace Game {
     extern std::string nickname;
     extern std::string dev_password;
     extern std::string disconnect_message;
+    // the page found a login (uuid) to show the server; saves need one
+    extern uint8_t has_login;
+    // a line shown for a few seconds in the game, and until when (Game::timestamp)
+    extern std::string notice;
+    extern double notice_until;
+    void show_notice(std::string const &);
     extern std::array<uint8_t, PetalID::kNumPetals> seen_petals;
     extern std::array<uint8_t, MobID::kNumMobs> seen_mobs;
     
