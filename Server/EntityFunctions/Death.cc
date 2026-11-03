@@ -49,7 +49,8 @@ static void _add_score(Simulation *sim, EntityID const killer_id, Entity const &
         killer.set_score(killer.get_score() + target.score_reward);
 }
 
-// a kill of a logged in player's flower, for the leaderboards
+// a kill of another player's flower by a logged in player, for the leaderboards
+// (mobs do not count)
 static void _add_kill(Simulation *sim, EntityID const killer_id, Entity const &target) {
     if (!sim->ent_exists(killer_id) || killer_id == target.id) return;
     Entity const &killer = sim->get_ent(killer_id);
@@ -64,7 +65,7 @@ void entity_on_death(Simulation *sim, Entity const &ent) {
     uint8_t natural_despawn = BitMath::at(ent.flags, EntityFlags::kIsDespawning) && ent.despawn_tick == 0;
     if (ent.score_reward > 0 && !natural_despawn) {
         _add_score(sim, ent.last_damaged_by, ent);
-        _add_kill(sim, ent.last_damaged_by, ent);
+        if (ent.has_component(kFlower)) _add_kill(sim, ent.last_damaged_by, ent);
     }
     if (ent.has_component(kFlower) && sim->ent_alive(ent.get_parent())) {
         Entity &camera = sim->get_ent(ent.get_parent());
