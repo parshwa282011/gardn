@@ -211,6 +211,19 @@ Element *Ui::make_panel_buttons() {
             [](){ return Ui::panel_open == Panel::kSaves; },
             { .fill = 0xff5a9fdb, .line_width = 5, .round_radius = 3 }
         ),
+        // the pages of this site (scripts/common/edge.js), in a new tab
+        new Ui::Button(130, 35, 
+            new Ui::StaticText(16, "Leaderboard"), 
+            [](Element *elt, uint8_t e){ if (e == Ui::kClick) DOM::open_page("/gardn/leaderboard"); },
+            [](){ return false; },
+            { .fill = 0xff3fbf6f, .line_width = 5, .round_radius = 3 }
+        ),
+        new Ui::Button(100, 35, 
+            new Ui::StaticText(16, "Stats"), 
+            [](Element *elt, uint8_t e){ if (e == Ui::kClick) DOM::open_page("/gardn/stats"); },
+            [](){ return false; },
+            { .fill = 0xff4a8cf0, .line_width = 5, .round_radius = 3 }
+        ),
         new Ui::ShakeButton(120, 35, 
             new Ui::StaticText(16, "Changelog"), 
             [](Element *elt, uint8_t e){ if (e == Ui::kClick) {
