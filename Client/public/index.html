@@ -65,6 +65,18 @@
             }
             if (window.location.hash)
                 window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+            // Nobody gets in without a login: the page /login (same site, served next to this
+            // one) logs in, signs up and confirms the email, then brings the player back here.
+            // Whether the login still works is up to the servers; when they say no (Socket.cc)
+            // the player is sent there too.
+            let loggedIn = !!window.gardnLogin;
+            try { loggedIn = loggedIn || !!(window.sessionStorage['gardn_uuid'] && window.sessionStorage['gardn_PL-P']); } catch (e) {}
+            try { loggedIn = loggedIn || !!(window.localStorage['uuid'] && window.localStorage['PL-P']); } catch (e) {}
+            if (!loggedIn) {
+                window.gardnRedirecting = true;
+                window.location.replace('/login?next=' + encodeURIComponent(window.location.pathname));
+            }
         })();
     </script>
     <script>
@@ -89,6 +101,7 @@
             window.location.reload();
         };
         document.addEventListener("DOMContentLoaded", () => {
+            if (window.gardnRedirecting) return;
             const script = document.createElement('script');
             script.src = 'gardn-client.js?v=' + gardnPageV;
             script.async = true;

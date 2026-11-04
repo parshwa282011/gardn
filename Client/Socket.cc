@@ -62,10 +62,14 @@ extern "C" {
             Game::on_game_screen = 0;
             Game::socket.ready = 0;
             std::printf("Disconnected [%d](%s)\n", len, reason);
-            if (len == CloseReason::kExpired)
-                Game::disconnect_message = "Your login expired. Open the main page and log in again.";
-            else if (len == CloseReason::kUnauthorized)
-                Game::disconnect_message = "Not logged in. Open the main page and log in.";
+            if (len == CloseReason::kExpired || len == CloseReason::kUnauthorized) {
+                // an expired login, none, or an email that is not confirmed yet: the log in
+                // page deals with all of them (relogin: forget the login this page was using)
+                Game::disconnect_message = "Your login is not valid. Taking you to the log in page...";
+                EM_ASM({
+                    window.location.replace("/login?relogin=1&next=" + encodeURIComponent(window.location.pathname));
+                });
+            }
             else if (std::strlen(reason))
                 Game::disconnect_message = std::format("Disconnected with code {} ({})", len, reason);
             else
