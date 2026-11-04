@@ -144,24 +144,26 @@ void GameInstance::save_progress(Client *client) {
     for (uint8_t i = 0; i < player.get_loadout_count() + MAX_SLOT_COUNT; ++i)
         loadout[i] = player.get_loadout_ids(i);
     struct PlayerProgress progress = { .restore_id = restore_id, .score = player.get_score(), .loadout = loadout };
-    Server::account_saves[client->account_uuid].saves.push_back(progress);
-    Master::queue_add(client->account_uuid, progress);
-    Server::report_stats(client->account_uuid);
+    // to the master at once; this server keeps only the entity the player sees
+    Master::save(client->account_uuid, progress);
     DEBUG_ONLY(assert(camera.progress_saves.size() < MAX_PROGRESS_SAVES);)
     camera.progress_saves.push_back(alloc_progress(&simulation, progress, camera).id);
 }
 
-uint32_t GameInstance::restore_progress(Client *client, uint64_t restore_id) {
-    if (client->account_uuid.empty()) return 0;
+void GameInstance::drop_progress(Client *client, uint64_t restore_id) {
     Entity &camera = simulation.get_ent(client->camera);
-    auto account = Server::account_saves.find(client->account_uuid);
-    if (account == Server::account_saves.end()) return 0;
-    std::vector<PlayerProgress> &saves = account->second.saves;
-    auto iter = std::find_if(saves.begin(), saves.end(), [restore_id](PlayerProgress const &p){ return p.restore_id == restore_id; });
-    if (iter == saves.end())
-        return 0;
+    for (auto it = camera.progress_saves.begin(); it != camera.progress_saves.end();) {
+        Entity &ent = simulation.get_ent(*it);
+        if (ent.get_restore_id() == restore_id) {
+            simulation.request_delete(ent.id);
+            it = camera.progress_saves.erase(it);
+        } else
+            ++it;
+    }
+}
 
-    struct PlayerProgress progress = *iter;
+uint32_t GameInstance::apply_progress(Client *client, struct PlayerProgress const &progress) {
+    Entity &camera = simulation.get_ent(client->camera);
     camera.set_respawn_level(score_to_level(progress.score));
     for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
         PetalTracker::remove_petal(camera.get_inventory(i));
@@ -172,28 +174,34 @@ uint32_t GameInstance::restore_progress(Client *client, uint64_t restore_id) {
         camera.set_inventory(i, id);
         PetalTracker::add_petal(id);
     }
-
-    saves.erase(iter);
-    Master::queue_remove(client->account_uuid, restore_id);
-    Server::report_stats(client->account_uuid);
-    simulation.for_each<kProgress>([=](Simulation *sim, Entity &ent){
-        if (ent.get_restore_id() == restore_id) {
-            sim->request_delete(ent.id);
-            std::erase(sim->get_ent(ent.get_parent()).progress_saves, ent.id);
-        }
-    });
-
+    drop_progress(client, progress.restore_id);
     return progress.score;
 }
 
-void GameInstance::find_progress_saves(Client *client) {
+std::vector<PlayerProgress> GameInstance::progress_of(Client *client) {
+    std::vector<PlayerProgress> list;
+    if (!simulation.ent_exists(client->camera)) return list;
+    Entity &camera = simulation.get_ent(client->camera);
+    for (EntityID id : camera.progress_saves) {
+        if (!simulation.ent_exists(id)) continue;
+        Entity &ent = simulation.get_ent(id);
+        PlayerProgress progress = {};
+        progress.restore_id = ent.get_restore_id();
+        progress.score = ent.get_score();
+        for (uint8_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
+            progress.loadout[i] = ent.get_saved_loadout(i);
+        list.push_back(progress);
+    }
+    return list;
+}
+
+void GameInstance::show_progress_saves(Client *client, std::vector<PlayerProgress> const &saves) {
     Entity &camera = simulation.get_ent(client->camera);
     DEBUG_ONLY(assert(camera.progress_saves.size() == 0);)
     if (client->account_uuid.empty()) return;
-    auto account = Server::account_saves.find(client->account_uuid);
-    if (account == Server::account_saves.end()) return;
-    for (struct PlayerProgress &progress : account->second.saves) {
+    for (PlayerProgress const &progress : saves) {
         if (camera.progress_saves.size() >= MAX_PROGRESS_SAVES) break;
-        camera.progress_saves.push_back(alloc_progress(&simulation, progress, camera).id);
+        PlayerProgress copy = progress;
+        camera.progress_saves.push_back(alloc_progress(&simulation, copy, camera).id);
     }
 }

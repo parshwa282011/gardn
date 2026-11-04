@@ -17,7 +17,7 @@
 
 Client::Client() : game(nullptr) {}
 
-void Client::init(uint64_t recovery_id, uint8_t gamemode) {
+void Client::init(uint64_t recovery_id, uint8_t gamemode, std::vector<PlayerProgress> const &saves) {
     DEBUG_ONLY(assert(game == nullptr);)
     DEBUG_ONLY(recovery_id = 0;)
     EntityID camera_id = NULL_ENTITY;
@@ -36,15 +36,17 @@ void Client::init(uint64_t recovery_id, uint8_t gamemode) {
     }
     Server::games[gamemode].add_client(this, camera_id);
     if (camera_id == NULL_ENTITY)
-        game->find_progress_saves(this);
+        game->show_progress_saves(this, saves);
 }
 
 void Client::move(GameInstance *new_game) {
     if (game == new_game) return;
     Entity &old_camera = game->simulation.get_ent(camera);
+    // the saves are the entities of the old camera: they move with the player
+    std::vector<PlayerProgress> saves = game->progress_of(this);
     game->simulation.request_delete(camera);
     new_game->add_client(this, NULL_ENTITY);
-    game->find_progress_saves(this);
+    game->show_progress_saves(this, saves);
     Entity &new_camera = game->simulation.get_ent(camera);
     new_camera.set_respawn_level(old_camera.get_respawn_level());
     for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i) {
@@ -163,7 +165,7 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             break;
         }
         case Serverbound::kClientSpawn: {
-            if (client->alive()) break;
+            if (client->alive() || client->restoring) break;
             //check string length
             std::string name, pwd;
             if (client->check_invalid(validator.validate_uint64())) return;
@@ -174,18 +176,20 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             reader.read<std::string>(pwd);
             if (client->check_invalid(UTF8Parser::is_valid_utf8(name))) return;
             for (char &c : pwd) c ^= pwd.capacity();
-            Simulation *simulation = &client->game->simulation;
-            Entity &camera = simulation->get_ent(client->camera);
-            uint32_t score = client->game->restore_progress(client, restore_id);
-            Entity &player = alloc_player(simulation, camera.get_team());
-            player_spawn(simulation, camera, player);
-            if (score != 0) player.set_score(score);
-            player.set_name(name);
             uint8_t dev = pwd == "ez hax"; // feel free to use
-            camera.set_dev(dev);
-            player.set_dev(dev);
-            std::cout << "player_spawn" << (dev ? "_dev " : " ") << name_or_unnamed(name)
-                << " <" << +client->game->gamemode << "," << +player.id.hash << "," << +player.id.id << ">\n";
+#ifdef WASM_SERVER
+            if (restore_id != 0 && !client->account_uuid.empty()) {
+                // the save is handed over by the master (and gone from there)
+                if (client->restoring) break;
+                client->restoring = 1;
+                client->restoring_name = name;
+                client->restoring_dev = dev;
+                client->restoring_id = restore_id;
+                Master::request_restore(ws->id(), client->account_uuid, restore_id);
+                break;
+            }
+#endif
+            client->spawn(name, dev, nullptr);
             break;
         }
         case Serverbound::kPetalDelete: {
@@ -259,12 +263,6 @@ void Client::on_disconnect(WebSocket *ws, int code, std::string_view message) {
     Client *client = ws->getUserData();
     if (client == nullptr) return;
     client->remove();
-    if (client->account_counted) {
-        client->account_counted = 0;
-        auto account = Server::account_saves.find(client->account_uuid);
-        if (account != Server::account_saves.end() && --account->second.clients == 0)
-            Server::account_saves.erase(account);
-    }
 }
 
 void Client::on_account(uint8_t status, std::vector<PlayerProgress> &saves) {
@@ -272,14 +270,39 @@ void Client::on_account(uint8_t status, std::vector<PlayerProgress> &saves) {
     if (status == 2) { disconnect(CloseReason::kExpired, "Session Expired"); return; }
     if (status == 3) { disconnect(CloseReason::kServer, "Server Error"); return; }
     if (status != 1) { disconnect(CloseReason::kUnauthorized, "Not Logged In"); return; }
-    Server::AccountSaves &account = Server::account_saves[account_uuid];
-    // another connection of this account already holds the live list
-    if (account.clients == 0) account.saves = std::move(saves);
-    ++account.clients;
-    account_counted = 1;
     verified = 1;
-    Server::report_stats(account_uuid);
-    init(pending_recovery_id, pending_gamemode);
+    // the list is only passed on: the camera gets one entity per save and this
+    // server holds on to nothing else
+    init(pending_recovery_id, pending_gamemode, saves);
+}
+
+void Client::on_restore(uint8_t status, PlayerProgress const *progress) {
+    if (!restoring) return;
+    restoring = 0;
+    if (game == nullptr || alive()) {
+        // nowhere to put it: give the save back to the master
+        if (status == 1 && progress != nullptr) Master::save(account_uuid, *progress);
+        return;
+    }
+    // gone from the master: the entity on the player's screen is stale
+    if (status == 4) game->drop_progress(this, restoring_id);
+    // could not ask the master: the save is still there, spawn without it
+    spawn(restoring_name, restoring_dev, status == 1 ? progress : nullptr);
+    restoring_name.clear();
+}
+
+void Client::spawn(std::string const &name, uint8_t dev, PlayerProgress const *progress) {
+    Simulation *simulation = &game->simulation;
+    Entity &camera = simulation->get_ent(this->camera);
+    uint32_t score = progress != nullptr ? game->apply_progress(this, *progress) : 0;
+    Entity &player = alloc_player(simulation, camera.get_team());
+    player_spawn(simulation, camera, player);
+    if (score != 0) player.set_score(score);
+    player.set_name(name);
+    camera.set_dev(dev);
+    player.set_dev(dev);
+    std::cout << "player_spawn" << (dev ? "_dev " : " ") << name_or_unnamed(name)
+        << " <" << +game->gamemode << "," << +player.id.hash << "," << +player.id.id << ">\n";
 }
 
 bool Client::check_invalid(bool valid) {

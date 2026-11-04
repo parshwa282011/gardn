@@ -71,6 +71,29 @@ extern "C" {
         iter->second->getUserData()->on_account(status, saves);
     }
 
+    // The answer to Master::request_restore: the save it hands over (if any)
+    // and then the verdict. 1 here it is, 4 gone from the master, 3 trouble
+    std::unordered_map<int, PlayerProgress> RESTORED_SAVES;
+
+    void restore_save(int ws_id, uint32_t hi, uint32_t lo, uint32_t score, uint8_t *loadout) {
+        PlayerProgress progress = {};
+        progress.restore_id = (static_cast<uint64_t>(hi) << 32) | lo;
+        progress.score = score;
+        for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
+            progress.loadout[i] = loadout[i] < PetalID::kNumPetals ? loadout[i] : PetalID::kNone;
+        RESTORED_SAVES[ws_id] = progress;
+    }
+
+    void restore_done(int ws_id, int status) {
+        auto saved = RESTORED_SAVES.find(ws_id);
+        bool have = saved != RESTORED_SAVES.end();
+        PlayerProgress progress = have ? saved->second : PlayerProgress{};
+        if (have) RESTORED_SAVES.erase(saved);
+        auto iter = WS_MAP.find(ws_id);
+        if (iter == WS_MAP.end()) return; // the player left; the host put the save back
+        iter->second->getUserData()->on_restore(have ? status : (status == 1 ? 3 : status), have ? &progress : nullptr);
+    }
+
     void sigusr2() {
         Server::is_draining = true;
     }
@@ -275,7 +298,9 @@ EM_JS(void, master_init_js, (), {
         const M = Module.master = {
             url: (process.env["MASTER_URL"] || "http://127.0.0.1:55554"),
             secret: process.env["SERVER_SECRET"] || "",
-            pending: new Map(), /* uuid -> { add: Map(id -> save), remove: Set(id), tries } */
+            /* only what could not be sent yet: uuid -> { add: Map(id -> save), remove: Set(id), tries, kills } */
+            pending: new Map(),
+            mythic: [], /* petal ids of the Mythic rarity (Master::init), the master adds them up */
             chain: Promise.resolve()
         };
         while (M.url.endsWith("/")) M.url = M.url.slice(0, -1);
@@ -294,7 +319,7 @@ EM_JS(void, master_init_js, (), {
         };
         M.entry = function(uuid) {
             let e = M.pending.get(uuid);
-            if (!e) { e = { add: new Map(), remove: new Set(), tries: 0, kills: 0, stats: null }; M.pending.set(uuid, e); }
+            if (!e) { e = { add: new Map(), remove: new Set(), tries: 0, kills: 0 }; M.pending.set(uuid, e); }
             return e;
         };
         /* put changes back after a failed send (newer changes win) */
@@ -306,7 +331,6 @@ EM_JS(void, master_init_js, (), {
             const cur = M.entry(uuid);
             cur.tries = Math.max(cur.tries, old.tries);
             cur.kills += old.kills;
-            if (!cur.stats) cur.stats = old.stats;
             old.add.forEach(function(save, id) {
                 if (!cur.remove.has(id) && !cur.add.has(id)) cur.add.set(id, save);
             });
@@ -321,9 +345,9 @@ EM_JS(void, master_init_js, (), {
                 taken.forEach(function(t) { M.pending.delete(t[0]); });
                 const changes = taken.map(function(t) {
                     const c = { "uuid": t[0], "add": Array.from(t[1].add.values()), "remove": Array.from(t[1].remove) };
-                    /* what the leaderboards need: kills since the last report, and what the saves add up to */
+                    /* kills since the last report; the master adds up the saves itself */
                     if (t[1].kills) c["kills"] = t[1].kills;
-                    if (t[1].stats) { c["mythics"] = t[1].stats["mythics"]; c["best_score"] = t[1].stats["best"]; }
+                    if (t[1].add.size || t[1].remove.size) c["mythic_ids"] = M.mythic;
                     return c;
                 });
                 let status = 0, j = {};
@@ -338,6 +362,38 @@ EM_JS(void, master_init_js, (), {
                 console.log("saved progress of " + (taken.length - failed.size) + " account(s)");
             }).catch(function(e) { console.log("flush error:", e); });
             return M.chain;
+        };
+        /* a new progress save goes to the master at once; it stays here only if that fails */
+        M.save = function(uuid, save) {
+            const e = M.entry(uuid);
+            e.remove.delete(save["save_id"]);
+            e.add.set(save["save_id"], save);
+            return M.flush(uuid);
+        };
+        /* restoring a save: the master removes it and hands it over in one step */
+        M.take = async function(wsId, uuid, id) {
+            let status = 3, save = null;
+            try {
+                await M.flush(uuid); /* a save made a moment ago has to be there */
+                const r = await M.call("/srv/gardn/take", { "uuid": uuid, "save_id": id, "mythic_ids": M.mythic });
+                if (r[0] === 200 && r[1]["ok"]) { status = 1; save = r[1]["save"]; }
+                else if (r[0] === 404) status = 4;
+            } catch (e) { console.log("master unreachable:", e.message); }
+            if (status === 1 && !Module.ws_connections[wsId]) {
+                /* the player left while we waited: the save goes back */
+                M.save(uuid, save);
+                return;
+            }
+            if (status === 1) {
+                const ptr = _malloc(32);
+                HEAPU8.fill(0, ptr, ptr + 32);
+                const loadout = save["loadout"] || [];
+                for (let i = 0; i < 24 && i < loadout.length; ++i) HEAPU8[ptr + i] = loadout[i] & 255;
+                _restore_save(wsId, parseInt(id.slice(0, 8), 16) >>> 0, parseInt(id.slice(8), 16) >>> 0,
+                              (save["score"] || 0) >>> 0, ptr);
+                _free(ptr);
+            }
+            _restore_done(wsId, status);
         };
         M.load = async function(wsId, uuid, plp) {
             let status = 3, saves = [];
@@ -372,6 +428,10 @@ EM_JS(void, master_init_js, (), {
 
 void Master::init() {
     master_init_js();
+    // the petals the master counts for the "Mythics" leaderboard
+    for (PetalID::T id = 0; id < PetalID::kNumPetals; ++id)
+        if (PETAL_DATA[id].rarity == RarityID::kMythic)
+            EM_ASM({ Module.master.mythic.push($0); }, id);
 }
 
 void Master::request_account(int ws_id, std::string const &uuid, std::string const &pl_p) {
@@ -380,33 +440,23 @@ void Master::request_account(int ws_id, std::string const &uuid, std::string con
     }, ws_id, uuid.c_str(), pl_p.c_str());
 }
 
-void Master::queue_add(std::string const &uuid, PlayerProgress const &progress) {
+void Master::save(std::string const &uuid, PlayerProgress const &progress) {
     EM_ASM({
         const id = ($1 >>> 0).toString(16).padStart(8, "0") + ($2 >>> 0).toString(16).padStart(8, "0");
-        const e = Module.master.entry(UTF8ToString($0));
-        e.remove.delete(id);
-        e.add.set(id, { "save_id": id, "score": $3 >>> 0, "loadout": Array.from(HEAPU8.subarray($4, $4 + $5)) });
+        Module.master.save(UTF8ToString($0), { "save_id": id, "score": $3 >>> 0, "loadout": Array.from(HEAPU8.subarray($4, $4 + $5)) });
     }, uuid.c_str(), static_cast<uint32_t>(progress.restore_id >> 32), static_cast<uint32_t>(progress.restore_id & 0xffffffffu),
        progress.score, progress.loadout.data(), static_cast<int>(progress.loadout.size()));
 }
 
-void Master::queue_remove(std::string const &uuid, uint64_t restore_id) {
+void Master::request_restore(int ws_id, std::string const &uuid, uint64_t restore_id) {
     EM_ASM({
-        const id = ($1 >>> 0).toString(16).padStart(8, "0") + ($2 >>> 0).toString(16).padStart(8, "0");
-        const e = Module.master.entry(UTF8ToString($0));
-        e.add.delete(id);
-        e.remove.add(id);
-    }, uuid.c_str(), static_cast<uint32_t>(restore_id >> 32), static_cast<uint32_t>(restore_id & 0xffffffffu));
+        const id = ($2 >>> 0).toString(16).padStart(8, "0") + ($3 >>> 0).toString(16).padStart(8, "0");
+        Module.master.take($0, UTF8ToString($1), id);
+    }, ws_id, uuid.c_str(), static_cast<uint32_t>(restore_id >> 32), static_cast<uint32_t>(restore_id & 0xffffffffu));
 }
 
 void Master::add_kill(std::string const &uuid) {
     EM_ASM({ Module.master.entry(UTF8ToString($0)).kills++; }, uuid.c_str());
-}
-
-void Master::set_stats(std::string const &uuid, uint32_t mythics, uint32_t best_score) {
-    EM_ASM({
-        Module.master.entry(UTF8ToString($0)).stats = ({ "mythics": $1 >>> 0, "best": $2 >>> 0 });
-    }, uuid.c_str(), mythics, best_score);
 }
 
 void Master::flush() {

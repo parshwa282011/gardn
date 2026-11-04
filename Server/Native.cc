@@ -93,10 +93,9 @@ void Server::stop() {
 #include <Server/Master.hh>
 void Master::init() {}
 void Master::request_account(int, std::string const &, std::string const &) {}
-void Master::queue_add(std::string const &, PlayerProgress const &) {}
-void Master::queue_remove(std::string const &, uint64_t) {}
+void Master::save(std::string const &, PlayerProgress const &) {}
+void Master::request_restore(int, std::string const &, uint64_t) {}
 void Master::add_kill(std::string const &) {}
-void Master::set_stats(std::string const &, uint32_t, uint32_t) {}
 void Master::flush() {}
 
 void Client::send_packet(uint8_t const *packet, size_t size) {

@@ -28,13 +28,23 @@ public:
     // account (empty uuid = anonymous: can play, cannot save progress)
     std::string account_uuid;
     uint8_t verifying = 0;      // waiting for the master to answer
-    uint8_t account_counted = 0;
     uint64_t pending_recovery_id = 0;
     uint8_t pending_gamemode = 0;
+    // a spawn that is waiting for the master to hand over the save it restores
+    uint8_t restoring = 0;
+    uint8_t restoring_dev = 0;
+    std::string restoring_name;
+    uint64_t restoring_id = 0;
     Client();
-    void init(uint64_t, uint8_t);
+    // `saves`: what the master has for the account, shown as progress entities
+    void init(uint64_t, uint8_t, std::vector<struct PlayerProgress> const & = {});
     // status: 1 accepted, 2 PL-P expired, 3 master unreachable, else refused
     void on_account(uint8_t status, std::vector<struct PlayerProgress> &saves);
+    // the answer to Master::request_restore. status: 1 here it is (`progress`),
+    // 4 the save is gone, anything else: the master could not be asked
+    void on_restore(uint8_t status, struct PlayerProgress const *progress);
+    // puts a player into the world (name, dev flag, the save it restores or null)
+    void spawn(std::string const &name, uint8_t dev, struct PlayerProgress const *progress);
     void move(GameInstance *);
     void remove();
     void disconnect(int = CloseReason::kProtocol, std::string const & = "Protocol Error");
