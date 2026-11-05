@@ -133,7 +133,8 @@ Entity &alloc_player(Simulation *sim, EntityID const team) {
     player.health = player.max_health = BASE_HEALTH;
     player.set_health_ratio(1);
     player.damage = BASE_BODY_DAMAGE;
-    player.immunity_ticks = 1.0 * TPS;
+    // nothing targets or hurts a new flower for its first 3 seconds
+    player.immunity_ticks = 3 * TPS;
 
     player.add_component(kScore);
 

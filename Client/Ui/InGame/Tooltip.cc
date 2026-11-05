@@ -69,6 +69,12 @@ static Ui::Element *make_petal_stat_container(PetalID::T id) {
             new Ui::StaticText(12, format_number(attrs.constant_heal) + "/s")
         }, 0, 0, { .h_justify = Style::Left }));
     }
+    if (attrs.constant_sheild > 0) {
+        stats.push_back(new Ui::HContainer({
+            new Ui::StaticText(12, "Shield: ", { .fill = 0xffcde23b }),
+            new Ui::StaticText(12, format_number(attrs.constant_sheild) + "/s")
+        }, 0, 0, { .h_justify = Style::Left }));
+    }
     if (attrs.burst_heal > 0) {
         stats.push_back(new Ui::HContainer({
             new Ui::StaticText(12, "Heal: ", { .fill = 0xffff96cb }),
