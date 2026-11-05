@@ -13,7 +13,9 @@
 #include <Shared/Config.hh>
 
 #include <array>
+#include <cstdlib>
 #include <iostream>
+#include <sstream>
 
 Client::Client() : game(nullptr) {}
 
@@ -233,6 +235,24 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             Simulation *simulation = &client->game->simulation;
             Entity &camera = simulation->get_ent(client->camera);
             Entity &player = simulation->get_ent(camera.get_player());
+            // /summon <mob id> <password>: never shown to the others and never logged (it holds the password)
+            if (text.rfind("/summon", 0) == 0) {
+                if (client->summon_fails >= 5) break;
+                std::istringstream args(text.substr(7));
+                std::string id_text, password;
+                args >> id_text >> password;
+                if (!Master::summon_password_ok(password)) {
+                    ++client->summon_fails;
+                    std::cout << "summon refused for " << name_or_unnamed(player.get_name()) << '\n';
+                    break;
+                }
+                char *end = nullptr;
+                unsigned long mob_id = std::strtoul(id_text.c_str(), &end, 10);
+                if (id_text.empty() || *end != 0 || mob_id >= MobID::kNumMobs) break;
+                summon_mob_near(simulation, player, (MobID::T) mob_id);
+                std::cout << "summon " << MOB_DATA[mob_id].name << " by " << name_or_unnamed(player.get_name()) << '\n';
+                break;
+            }
             if (player.chat_sent != NULL_ENTITY) break;
             player.chat_sent = alloc_chat(simulation, text, player).id;
             std::cout << "chat " << name_or_unnamed(player.get_name()) << ": " << text << '\n';

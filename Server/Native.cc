@@ -1,5 +1,6 @@
 #ifndef WASM_SERVER
 #include <Server/Server.hh>
+#include <cstdlib>
 
 #include <Server/Client.hh>
 #include <Shared/Config.hh>
@@ -97,6 +98,10 @@ void Master::save(std::string const &, PlayerProgress const &) {}
 void Master::request_restore(int, std::string const &, uint64_t) {}
 void Master::add_kill(std::string const &) {}
 void Master::flush() {}
+bool Master::summon_password_ok(std::string const &given) {
+    char const *want = std::getenv("SUMMON_PASSWORD");
+    return want != nullptr && want[0] != 0 && given == want;
+}
 
 void Client::send_packet(uint8_t const *packet, size_t size) {
     if (ws == nullptr) return;

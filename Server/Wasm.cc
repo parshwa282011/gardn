@@ -463,5 +463,13 @@ void Master::flush() {
     EM_ASM({ Module.master.flush(); });
 }
 
+// SUMMON_PASSWORD comes from the .env that master_init_js loaded into process.env
+bool Master::summon_password_ok(std::string const &given) {
+    return EM_ASM_INT({
+        const want = process.env["SUMMON_PASSWORD"] || "";
+        return want.length > 0 && UTF8ToString($0) === want ? 1 : 0;
+    }, given.c_str()) == 1;
+}
+
 WebSocketServer Server::server;
 #endif

@@ -27,6 +27,7 @@ public:
     uint8_t seen_arena = 0;
     // account (empty uuid = anonymous: can play, cannot save progress)
     std::string account_uuid;
+    uint8_t summon_fails = 0;   // wrong /summon passwords; the command stops answering after a few
     uint8_t verifying = 0;      // waiting for the master to answer
     uint64_t pending_recovery_id = 0;
     uint8_t pending_gamemode = 0;

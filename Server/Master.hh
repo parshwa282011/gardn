@@ -31,4 +31,7 @@ namespace Master {
     // send everything pending now (shutdown); the host keeps the process alive
     // until the request finishes
     void flush();
+    // the chat command /summon: is `given` the SUMMON_PASSWORD of the server's .env?
+    // (false when that is not set, so the command stays off)
+    bool summon_password_ok(std::string const &given);
 }

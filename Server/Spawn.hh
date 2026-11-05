@@ -12,6 +12,8 @@ Entity &alloc_mob(
     EntityID const, std::function<void(Entity &)> = nullptr
 );
 Entity &alloc_player(Simulation *, EntityID const);
+// the /summon chat command: a mob a bit far from the player, in a random direction
+Entity &summon_mob_near(Simulation *, Entity const &, MobID::T);
 Entity &alloc_petal(Simulation *, PetalID::T, Entity const &);
 Entity &alloc_web(Simulation *, float, Entity const &);
 Entity &alloc_chat(Simulation *, std::string &, Entity const &);

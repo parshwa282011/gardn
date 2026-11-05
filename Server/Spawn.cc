@@ -8,6 +8,7 @@
 #include <Shared/Simulation.hh>
 #include <Shared/StaticData.hh>
 
+#include <algorithm>
 #include <cmath>
 
 Entity &alloc_drop(Simulation *sim, PetalID::T drop_id) {
@@ -114,6 +115,22 @@ Entity &alloc_mob(
         }
         return head;
     }
+}
+
+Entity &summon_mob_near(Simulation *sim, Entity const &player, MobID::T mob_id) {
+    float const distance = 600;
+    float const margin = 200;
+    float const angle = frand() * 2 * M_PI;
+    float x = player.get_x() + distance * cosf(angle);
+    float y = player.get_y() + distance * sinf(angle);
+    x = std::min(std::max(x, margin), (float) ARENA_WIDTH - margin);
+    y = std::min(std::max(y, margin), (float) ARENA_HEIGHT - margin);
+    // a mob like the ones the zones spawn, without the zone bookkeeping
+    return alloc_mob(sim, mob_id, x, y, NULL_ENTITY, [](Entity &mob){
+        mob.immunity_ticks = TPS;
+        BitMath::set(mob.flags, EntityFlags::kHasCulling);
+        mob.score_reward = MOB_DATA[mob.get_mob_id()].xp;
+    });
 }
 
 Entity &alloc_player(Simulation *sim, EntityID const team) {
