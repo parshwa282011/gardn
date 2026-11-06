@@ -36,7 +36,7 @@ void ChatInput::on_render_skip(Renderer &ctx) {
 }
 
 Element *Ui::make_chat_input() {
-    Element *elt = new Ui::ChatInput(Game::chat_text, 300, 25, MAX_CHAT_LENGTH, {
+    Element *elt = new Ui::ChatInput(Game::chat_text, 300, 25, MAX_COMMAND_LENGTH, {
         .should_render = [](){
             return Game::show_chat && Game::alive();
         }

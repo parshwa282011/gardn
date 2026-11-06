@@ -23,6 +23,8 @@ inline uint32_t const MAX_SPONGE_PERIOD = 10 * TPS;
 
 inline uint32_t const MAX_NAME_LENGTH = 16;
 inline uint32_t const MAX_CHAT_LENGTH = 64;
+// what the chat box and the server accept: a /summon or /restore command is longer than a chat line
+inline uint32_t const MAX_COMMAND_LENGTH = 256;
 inline uint32_t const MAX_DEV_PWD_LENGTH = 28;
 inline uint32_t const MAX_UUID_LENGTH = 36;
 inline uint32_t const MAX_PLP_LENGTH = 200;
