@@ -463,6 +463,35 @@ void Master::flush() {
     EM_ASM({ Module.master.flush(); });
 }
 
+// One request at a time; a list that arrives while the last one is still on its way is skipped
+// (the next one is 30 seconds later and says the same). Players are JSON text: {"players": [...]}.
+void Master::backup(std::vector<BackupPlayer> const &players) {
+    std::string json = "{\"players\":[";
+    bool first = true;
+    for (BackupPlayer const &p : players) {
+        if (p.uuid.find_first_of("\"\\") != std::string::npos) continue;
+        if (!first) json += ",";
+        first = false;
+        json += "{\"uuid\":\"" + p.uuid + "\",\"score\":" + std::to_string(p.score) + ",\"loadout\":[";
+        for (size_t i = 0; i < p.loadout.size(); ++i)
+            json += (i ? "," : "") + std::to_string(p.loadout[i]);
+        json += "]}";
+    }
+    json += "]}";
+    EM_ASM({
+        const M = Module.master;
+        if (M.backup_busy) return;
+        M.backup_busy = true;
+        M.call("/srv/gardn/backup", JSON.parse(UTF8ToString($0))).then(function(r) {
+            if (r[0] !== 200 && !M.backup_failed) console.log("crash backup refused by the master (" + r[0] + ")");
+            M.backup_failed = r[0] !== 200;
+        }).catch(function(e) {
+            if (!M.backup_failed) console.log("crash backup: master unreachable:", e.message);
+            M.backup_failed = true;
+        }).finally(function() { M.backup_busy = false; });
+    }, json.c_str());
+}
+
 // SUMMON_PASSWORD comes from the .env that master_init_js loaded into process.env
 bool Master::summon_password_ok(std::string const &given) {
     return EM_ASM_INT({

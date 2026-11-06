@@ -34,6 +34,21 @@ void Server::tick() {
     std::chrono::duration<double, std::milli> tick_time = end - start;
     if (tick_time > 1000ms / TPS) std::cout << "tick took " << tick_time << '\n';
 
+    // the crash backup: who is in the world, every 30 seconds. Nothing is sent while
+    // nobody is in (a standby has no players: it must not wipe the primary's backups
+    // that were copied to it), except the one list that says the last player left
+    static uint32_t backup_ticks = 0;
+    static bool backup_had_players = false;
+    if (!Server::is_stopping && ++backup_ticks >= 30 * TPS) {
+        backup_ticks = 0;
+        std::vector<BackupPlayer> list;
+        for (GameInstance &game : Server::games) game.collect_backup(list);
+        if (!list.empty() || backup_had_players) {
+            Master::backup(list);
+            backup_had_players = !list.empty();
+        }
+    }
+
     if (Server::is_draining && !was_draining) {
         was_draining = true;
         std::cout << "draining...\n";

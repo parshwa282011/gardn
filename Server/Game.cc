@@ -150,6 +150,20 @@ void GameInstance::save_progress(Client *client) {
     camera.progress_saves.push_back(alloc_progress(&simulation, progress, camera).id);
 }
 
+void GameInstance::collect_backup(std::vector<BackupPlayer> &out) {
+    for (Client *client : clients) {
+        // anonymous players have no account to give a save to; a player who is
+        // not in the world has no loadout to lose (their save is already made)
+        if (client->account_uuid.empty() || !client->alive()) continue;
+        Entity &camera = simulation.get_ent(client->camera);
+        Entity &player = simulation.get_ent(camera.get_player());
+        BackupPlayer backup = { client->account_uuid, player.get_score(), {} };
+        for (uint8_t i = 0; i < player.get_loadout_count() + MAX_SLOT_COUNT; ++i)
+            backup.loadout[i] = player.get_loadout_ids(i);
+        out.push_back(backup);
+    }
+}
+
 void GameInstance::drop_progress(Client *client, uint64_t restore_id) {
     Entity &camera = simulation.get_ent(client->camera);
     for (auto it = camera.progress_saves.begin(); it != camera.progress_saves.end();) {

@@ -98,6 +98,7 @@ void Master::save(std::string const &, PlayerProgress const &) {}
 void Master::request_restore(int, std::string const &, uint64_t) {}
 void Master::add_kill(std::string const &) {}
 void Master::flush() {}
+void Master::backup(std::vector<BackupPlayer> const &) {}
 bool Master::summon_password_ok(std::string const &given) {
     char const *want = std::getenv("SUMMON_PASSWORD");
     return want != nullptr && want[0] != 0 && given == want;

@@ -5,6 +5,7 @@
 #include <Shared/Simulation.hh>
 
 #include <set>
+#include <vector>
 
 class Client;
 
@@ -15,6 +16,8 @@ public:
     Simulation simulation;
     uint8_t gamemode;
     GameInstance(uint8_t);
+    // the signed-in players that are in the world (for the master's crash backup)
+    void collect_backup(std::vector<struct BackupPlayer> &);
     void init();
     void tick();
     void add_client(Client *, EntityID);
