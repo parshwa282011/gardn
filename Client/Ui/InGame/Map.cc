@@ -20,7 +20,7 @@ void Minimap::on_render(Renderer &ctx) {
         ctx.set_fill(def.color);
         ctx.fill_rect(def.left, def.top, def.right - def.left, def.bottom - def.top);
         ctx.translate((def.left+def.right)/2,(def.top+def.bottom)/2);
-        ctx.draw_text(def.name, { .size = (def.bottom-def.top)/2 });
+        ctx.draw_text(def.name, { .size = (def.bottom-def.top)/4 });
         ctx.translate(-(def.left+def.right)/2,-(def.top+def.bottom)/2);
     }
     if (!Game::simulation.ent_exists(Game::camera_id)) return;
