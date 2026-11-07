@@ -325,7 +325,7 @@ Element *Ui::make_link_buttons() {
         new Ui::Button(170, 50,
             new Ui::StaticText(16, "Forked from Rysteria"),
             [](Element *elt, uint8_t e){
-                if (e == Ui::kClick) DOM::open_page("https://rysteria.pro");
+                if (e == Ui::kClick) DOM::open_page("https://rysteria.pro/gardn");
             },
             nullptr,
             { .fill = 0xff6b4fc4, .line_width = 4, .round_radius = 4 }

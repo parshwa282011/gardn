@@ -140,6 +140,7 @@ MULTIPLE(Progress, saved_loadout, PetalID::T, 2 * MAX_SLOT_COUNT)
     SINGLE(slow_ticks, game_tick_t, =0) \
     SINGLE(slow_inflict, game_tick_t, =0) \
     SINGLE(immunity_ticks, game_tick_t, =0) \
+    SINGLE(ghost_ticks, game_tick_t, =0) \
     SINGLE(dandy_ticks, game_tick_t, =0) \
     SINGLE(honey_ticks, game_tick_t, =0) \
     SINGLE(poison_ticks, game_tick_t, =0) \

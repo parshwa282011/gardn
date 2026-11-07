@@ -468,6 +468,13 @@ void Client::spawn(std::string const &name, uint8_t dev, PlayerProgress const *p
     player.set_name(name);
     camera.set_dev(dev);
     player.set_dev(dev);
+    // In the normal modes a new flower (a restore is one too) gets 5 seconds to get
+    // out of danger: no collisions, and nothing targets it or hurts it. The sandbox
+    // does not need it.
+    if (game->gamemode != Gamemode::kSandbox) {
+        player.immunity_ticks = SPAWN_PROTECTION_SECONDS * TPS;
+        player.ghost_ticks = SPAWN_PROTECTION_SECONDS * TPS;
+    }
     std::cout << "player_spawn" << (dev ? "_dev " : " ") << name_or_unnamed(name)
         << " <" << +game->gamemode << "," << +player.id.hash << "," << +player.id.id << ">\n";
 }

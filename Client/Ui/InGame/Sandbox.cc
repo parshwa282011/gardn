@@ -19,7 +19,7 @@ Element *Ui::make_sandbox_exit() {
             nullptr,
             { .fill = 0xffec6869, .line_width = 5, .round_radius = 5 }
         ),
-        new Ui::StaticText(16, "Sandbox - nothing here is saved", { .h_justify = Style::Left })
+        new Ui::StaticText(16, "Sandbox - nothing here is saved - press \\ for the menu", { .h_justify = Style::Left })
     }, 10, 10, {
         .should_render = [](){
             return Game::alive() && Game::simulation.arena_info.gamemode == Gamemode::kSandbox;

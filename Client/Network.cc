@@ -1,4 +1,5 @@
 #include <Client/DOM.hh>
+#include <format>
 #include <Client/Game.hh>
 
 #include <Client/Input.hh>
@@ -67,6 +68,8 @@ void Game::spawn_in(uint64_t restore_id) {
     Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
     if (Game::alive()) return;
     if (Game::on_game_screen == 0) {
+        if (Game::gamemode != Gamemode::kSandbox)
+            Game::show_notice(std::format("Spawn protection for {} seconds: nothing collides with you or targets you", SPAWN_PROTECTION_SECONDS));
         writer.write<uint8_t>(Serverbound::kClientSpawn);
         writer.write<uint64_t>(restore_id);
         writer.write<std::string>(Game::nickname);

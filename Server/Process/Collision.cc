@@ -9,6 +9,9 @@
 
 static bool _should_interact(Entity const &ent1, Entity const &ent2) {
     if (ent1.pending_delete || ent2.pending_delete) return false;
+    // a flower that just spawned goes through everything (but still picks up drops)
+    if ((ent1.ghost_ticks > 0 && !ent2.has_component(kDrop)) ||
+        (ent2.ghost_ticks > 0 && !ent1.has_component(kDrop))) return false;
     if (!(ent1.get_team() == ent2.get_team())) return true;
     if (BitMath::at((ent1.flags | ent2.flags), EntityFlags::kNoFriendlyCollision)) return false;
     if ((ent1.has_component(kMob) || ent1.has_component(kFlower)) &&

@@ -93,6 +93,7 @@ void Simulation::post_tick() {
             else --ent.despawn_tick;
         }
         if (ent.immunity_ticks > 0) --ent.immunity_ticks;
+        if (ent.ghost_ticks > 0) --ent.ghost_ticks;
     });
     for_each_entity([](Simulation *sim, Entity &ent) {
         if (!ent.pending_delete) return;

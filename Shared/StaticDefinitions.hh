@@ -7,6 +7,8 @@
 
 inline uint32_t const MAX_LEVEL = 100;
 inline uint32_t const TPS = 20;
+// how long a new flower in FFA and TDM goes through everything and is ignored by mobs
+inline uint32_t const SPAWN_PROTECTION_SECONDS = 5;
 inline uint32_t const ARENA_WIDTH = 40000;
 inline uint32_t const ARENA_HEIGHT = 4000;
 

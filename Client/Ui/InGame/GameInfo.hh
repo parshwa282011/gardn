@@ -26,6 +26,8 @@ namespace Ui {
     class Minimap final : public Element {
     public:
         Minimap(float);
+        // the shape of the map: the sandbox is not as wide as the others
+        virtual void refactor() override;
         virtual void on_render(Renderer &) override;
     };
 
