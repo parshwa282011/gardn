@@ -55,12 +55,24 @@ void Game::render_game() {
     {
         RenderContext context(&renderer);
         if (simulation.arena_info.gamemode == Gamemode::kSandbox) {
-            // the sandbox is one square, with a wall around it
+            // two areas side by side: the normal one (no mobs) and the PvP one (mobs)
             renderer.set_fill(MAP_DATA[0].color);
-            renderer.fill_rect(0, 0, SANDBOX_SIZE, SANDBOX_SIZE);
+            renderer.fill_rect(0, 0, SANDBOX_PVP_LEFT, SANDBOX_HEIGHT);
+            renderer.set_fill(0xffc26a5a);
+            renderer.fill_rect(SANDBOX_PVP_LEFT, 0, SANDBOX_WIDTH - SANDBOX_PVP_LEFT, SANDBOX_HEIGHT);
             renderer.set_stroke(0x60000000);
             renderer.set_line_width(12);
-            renderer.stroke_rect(-6, -6, SANDBOX_SIZE + 12, SANDBOX_SIZE + 12);
+            renderer.stroke_rect(-6, -6, SANDBOX_WIDTH + 12, SANDBOX_HEIGHT + 12);
+            renderer.begin_path();
+            renderer.move_to(SANDBOX_PVP_LEFT, 0);
+            renderer.line_to(SANDBOX_PVP_LEFT, SANDBOX_HEIGHT);
+            renderer.stroke();
+            for (uint8_t area = 0; area < 2; ++area) {
+                RenderContext label(&renderer);
+                renderer.translate(area == 0 ? SANDBOX_PVP_LEFT / 2 : (SANDBOX_PVP_LEFT + SANDBOX_WIDTH) / 2, 300);
+                renderer.set_global_alpha(0.35);
+                renderer.draw_text(area == 0 ? "Normal" : "PVP", { .fill = 0xffffffff, .size = 220, .stroke_scale = 0.08 });
+            }
         } else for (ZoneDefinition const &def : MAP_DATA) {
             renderer.set_fill(def.color);
             renderer.fill_rect(def.left, def.top, def.right - def.left, def.bottom - def.top);

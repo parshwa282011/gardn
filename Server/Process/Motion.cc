@@ -23,6 +23,11 @@ void tick_entity_motion(Simulation *sim, Entity &ent) {
         ent.set_x(fclamp(ent.get_x(), ent.get_radius(), arena_width_of(sim->arena_info.gamemode) - ent.get_radius()));
         ent.set_y(fclamp(ent.get_y(), ent.get_radius(), arena_height_of(sim->arena_info.gamemode) - ent.get_radius()));
     }
+    // the mobs that spawn by themselves in the sandbox stay in the PvP area (the ones
+    // summoned from the dev menu go wherever they want)
+    if (sim->arena_info.gamemode == Gamemode::kSandbox && ent.has_component(kMob) &&
+        BitMath::at(ent.flags, EntityFlags::kSpawnedFromZone))
+        ent.set_x(std::max<float>(ent.get_x(), SANDBOX_PVP_LEFT + ent.get_radius()));
     //ent.acceleration.set(0,0);
     ent.collision_velocity.set(0,0);
     ent.speed_ratio = 1;

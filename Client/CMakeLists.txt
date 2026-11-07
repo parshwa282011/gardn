@@ -34,6 +34,7 @@ set(SRCS
     StaticData.cc
     Storage.cc
     Ui/InGame/ChatInput.cc
+    Ui/InGame/DevMenu.cc
     Ui/InGame/InputFreeze.cc
     Ui/InGame/Leaderboard.cc
     Ui/InGame/LevelBar.cc

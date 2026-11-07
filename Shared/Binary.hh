@@ -19,8 +19,22 @@ enum Serverbound {
     kPetalDelete,
     kChatSend,
     kGamemodeSwitch,
-    kProgressSave
+    kProgressSave,
+    kDevCommand
 };
+
+// subcommands of Serverbound::kDevCommand: the developer menu, only accepted from
+// players in the sandbox
+namespace DevCommandID {
+    enum : uint8_t {
+        kSetLevel,        // uint8: the level (1 - MAX_LEVEL), the score follows
+        kSetScore,        // uint32: the score
+        kGivePetal,       // uint8: petal id, goes to the first empty slot
+        kToggleInvincible,
+        kSpawnMob,        // uint8: mob id, appears near the player
+        kClearMobs
+    };
+}
 
 enum CloseReason {
     kServer = 4001,

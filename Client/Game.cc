@@ -61,6 +61,12 @@ namespace Game {
     uint8_t show_chat = 0;
     std::string chat_text;
 
+    uint8_t show_dev_menu = 0;
+    uint8_t dev_tab = 0;
+    std::string dev_level_text;
+    std::string dev_score_text;
+    std::string dev_search_text;
+
     uint64_t recovery_id = 0;
     uint8_t is_outdated = 0;
 
@@ -170,6 +176,9 @@ void Game::init() {
         Ui::make_chat_input()
     );
     game_ui_window.add_child(
+        Ui::make_dev_menu()
+    );
+    game_ui_window.add_child(
         new Ui::HContainer({
             new Ui::StaticText(20, "Parshwaznia")
         }, 20, 0, { .h_justify = Ui::Style::Left, .v_justify = Ui::Style::Top })
@@ -244,6 +253,7 @@ void Game::reset() {
     transition_circle = 0;
     respawn_level = 1;
     loadout_count = 5;
+    show_dev_menu = 0;
     camera_id = player_id = NULL_ENTITY;
     for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
         cached_loadout[i] = PetalID::kNone;
@@ -398,7 +408,7 @@ void Game::tick(double time) {
         renderer.set_global_alpha(0.85);
         renderer.translate(renderer.width/2,renderer.height/2);
         renderer.draw_image(game_ui_renderer);
-        if (!Game::show_chat) {
+        if (!Game::show_chat && !Game::show_dev_menu) {
             //process keybind petal switches
             if (Input::keys_held_this_tick.contains('X'))
                 Game::swap_all_petals();
@@ -420,7 +430,7 @@ void Game::tick(double time) {
         if (Ui::UiLoadout::selected_with_keys < MAX_SLOT_COUNT &&
             Game::cached_loadout[Game::loadout_count + Ui::UiLoadout::selected_with_keys] == PetalID::kNone)
             Ui::UiLoadout::selected_with_keys = MAX_SLOT_COUNT;
-        if (!Game::show_chat && Ui::UiLoadout::selected_with_keys < MAX_SLOT_COUNT) {
+        if (!Game::show_chat && !Game::show_dev_menu && Ui::UiLoadout::selected_with_keys < MAX_SLOT_COUNT) {
             if (Input::keys_held_this_tick.contains('T')) {
                 Ui::ui_delete_petal(Ui::UiLoadout::selected_with_keys + Game::loadout_count);
                 Ui::forward_secondary_select();
@@ -450,7 +460,7 @@ void Game::tick(double time) {
     if (alive()) {
         if (!Input::is_mobile) {
             if (Input::keyboard_movement) {
-                if (!Game::show_chat) {
+                if (!Game::show_chat && !Game::show_dev_menu) {
                     Input::game_inputs.x = 300 * (Input::keys_held.contains('D') - Input::keys_held.contains('A') + Input::keys_held.contains(39) - Input::keys_held.contains(37));
                     Input::game_inputs.y = 300 * (Input::keys_held.contains('S') - Input::keys_held.contains('W') + Input::keys_held.contains(40) - Input::keys_held.contains(38));
                 } else
@@ -459,9 +469,12 @@ void Game::tick(double time) {
                 Input::game_inputs.x = (Input::mouse_x - renderer.width / 2) / Ui::scale;
                 Input::game_inputs.y = (Input::mouse_y - renderer.height / 2) / Ui::scale;
             }
-            uint8_t attack = (!Game::show_chat && Input::keys_held.contains(' ')) || BitMath::at(Input::mouse_buttons_state, Input::LeftMouse);
-            uint8_t defend = (!Game::show_chat && Input::keys_held.contains('\x10')) || BitMath::at(Input::mouse_buttons_state, Input::RightMouse);
+            uint8_t attack = (!Game::show_chat && !Game::show_dev_menu && Input::keys_held.contains(' ')) || BitMath::at(Input::mouse_buttons_state, Input::LeftMouse);
+            uint8_t defend = (!Game::show_chat && !Game::show_dev_menu && Input::keys_held.contains('\x10')) || BitMath::at(Input::mouse_buttons_state, Input::RightMouse);
             Input::game_inputs.flags = (attack << InputFlags::kAttacking) | (defend << InputFlags::kDefending);
+            // the mouse over the dev menu is for the menu, not for the flower
+            if (Game::show_dev_menu && Ui::dev_menu_contains_mouse())
+                Input::game_inputs = {};
         }
         send_inputs();
     } else
@@ -470,12 +483,25 @@ void Game::tick(double time) {
     if (Input::keys_held_this_tick.contains(';'))
         show_debug = !show_debug;
     // M: mouse <-> keyboard movement (the setting in the settings panel)
-    if (Input::keys_held_this_tick.contains('M') && Game::alive() && !Game::show_chat && !Input::is_mobile) {
+    if (Input::keys_held_this_tick.contains('M') && Game::alive() && !Game::show_chat && !Game::show_dev_menu && !Input::is_mobile) {
         Input::keyboard_movement = !Input::keyboard_movement;
         Input::freeze_input = 0;
         Game::show_notice(Input::keyboard_movement ? "Keyboard movement (WASD / arrows). Press M to switch back." : "Mouse movement. Press M to switch back.");
     }
-    if (Input::keys_held_this_tick.contains('\r')) {
+    // the developer menu (\ opens and closes it, ESC closes it): only in the sandbox, for
+    // everybody in it. Not while typing in a text field
+    if (!Game::alive() || simulation.arena_info.gamemode != Gamemode::kSandbox)
+        show_dev_menu = 0;
+    else if (!show_chat) {
+        if (show_dev_menu && Input::keys_held_this_tick.contains(27)) {
+            show_dev_menu = 0;
+            DOM::blur();
+        } else if (!DOM::text_input_focused() && Input::keys_held_this_tick.contains('\\')) {
+            show_dev_menu = !show_dev_menu;
+            if (!show_dev_menu) DOM::blur();
+        }
+    }
+    if (Input::keys_held_this_tick.contains('\r') && !show_dev_menu) {
         if (!Game::alive())
             Game::spawn_in();
         else

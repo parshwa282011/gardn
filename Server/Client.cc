@@ -344,6 +344,74 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             client->move(&Server::games[gamemode]);
             break;
         }
+        case Serverbound::kDevCommand: {
+            // the developer menu: only in the sandbox, for whoever is playing in it
+            // (nothing in there is kept), never in the other modes
+            if (client->game->gamemode != Gamemode::kSandbox || !client->alive()) break;
+            if (client->check_invalid(validator.validate_uint8())) return;
+            Simulation *simulation = &client->game->simulation;
+            Entity &camera = simulation->get_ent(client->camera);
+            Entity &player = simulation->get_ent(camera.get_player());
+            switch (reader.read<uint8_t>()) {
+                case DevCommandID::kSetLevel: {
+                    if (client->check_invalid(validator.validate_uint8())) return;
+                    uint32_t level = std::min<uint32_t>(std::max<uint32_t>(reader.read<uint8_t>(), 1), MAX_LEVEL);
+                    player.set_score(level_to_score(level));
+                    player.health = player.max_health; // max_health follows on the next tick
+                    break;
+                }
+                case DevCommandID::kSetScore: {
+                    if (client->check_invalid(validator.validate_uint32())) return;
+                    player.set_score(std::min<uint32_t>(reader.read<uint32_t>(), level_to_score(MAX_LEVEL)));
+                    break;
+                }
+                case DevCommandID::kGivePetal: {
+                    if (client->check_invalid(validator.validate_uint8())) return;
+                    uint8_t petal_id = reader.read<uint8_t>();
+                    if (client->check_invalid(petal_id < PetalID::kNumPetals)) return;
+                    // there is only one of each unique petal in all the games
+                    if (petal_id == PetalID::kNone || PETAL_DATA[petal_id].rarity == RarityID::kUnique) break;
+                    for (uint32_t i = 0; i < player.get_loadout_count() + MAX_SLOT_COUNT; ++i) {
+                        if (player.get_loadout_ids(i) != PetalID::kNone) continue;
+                        player.set_loadout_ids(i, petal_id);
+                        PetalTracker::add_petal(petal_id);
+                        break;
+                    }
+                    break;
+                }
+                case DevCommandID::kToggleInvincible: {
+                    uint8_t on = !camera.get_dev_invincible();
+                    camera.set_dev_invincible(on);
+                    player.set_dev_invincible(on);
+                    break;
+                }
+                case DevCommandID::kSpawnMob: {
+                    if (client->check_invalid(validator.validate_uint8())) return;
+                    uint8_t mob_id = reader.read<uint8_t>();
+                    if (client->check_invalid(mob_id < MobID::kNumMobs)) return;
+                    if (MOB_DATA[mob_id].rarity == RarityID::kUnique) break; // they drop unique petals
+                    // the world has room for a limited number of entities
+                    uint32_t mobs = 0;
+                    simulation->for_each<kMob>([&](Simulation *, Entity &) { ++mobs; });
+                    if (mobs >= 300) break;
+                    summon_mob_near(simulation, player, (MobID::T) mob_id);
+                    break;
+                }
+                case DevCommandID::kClearMobs: {
+                    // they just go: no drops, no score
+                    simulation->for_each<kMob>([&](Simulation *sim, Entity &mob) {
+                        if (mob.has_component(kFlower) || mob.pending_delete) return;
+                        BitMath::set(mob.flags, EntityFlags::kIsDespawning);
+                        sim->request_delete(mob.id);
+                    });
+                    break;
+                }
+                default:
+                    client->disconnect();
+                    return;
+            }
+            break;
+        }
         case Serverbound::kProgressSave: {
             if (!client->alive()) break;
             if (client->account_uuid.empty()) break;

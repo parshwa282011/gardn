@@ -35,7 +35,8 @@ static Element *make_changelog_contents() {
     Element *elt = new Ui::VContainer({
         make_date("November 7th 2026"),
         make_entries({
-            "Added the Sandbox mode: a small square with no mobs, nothing in it is saved to your account. Pick it next to FFA and TDM, leave it with the X at the top left",
+            "Added the Sandbox mode, next to FFA and TDM: two areas, a normal one without mobs and a PVP one where mobs spawn. Nothing in it is saved to your account. Leave it with the X at the top left",
+            "Press \\ in the sandbox for the developer menu: set your level, get any petal, summon mobs, clear them, be invincible",
             "Press M to switch between mouse and keyboard movement",
             "In mouse movement the buttons now also spread and pull in the petals while the mouse is in the box at the bottom",
             "Added a link to Rysteria, where this game is forked from"

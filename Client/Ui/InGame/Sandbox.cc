@@ -28,5 +28,6 @@ Element *Ui::make_sandbox_exit() {
         .v_justify = Style::Top,
         .no_animation = 1
     });
+    elt->y = 55; // under the title
     return elt;
 }

@@ -314,10 +314,12 @@ void player_spawn(Simulation *sim, Entity &camera, Entity &player) {
     float spawn_x = lerp(zone.left, zone.right, frand());
     float spawn_y = lerp(zone.top, zone.bottom, frand());
     if (sim->arena_info.gamemode == Gamemode::kSandbox) {
-        // anywhere in the square, away from its walls
-        spawn_x = lerp(300.0f, SANDBOX_SIZE - 300.0f, frand());
-        spawn_y = lerp(300.0f, SANDBOX_SIZE - 300.0f, frand());
+        // the normal area (the left half, no mobs), away from the walls
+        spawn_x = lerp(300.0f, SANDBOX_PVP_LEFT - 300.0f, frand());
+        spawn_y = lerp(300.0f, SANDBOX_HEIGHT - 300.0f, frand());
     }
+    // the invincibility of the dev menu stays on when the player respawns
+    player.set_dev_invincible(camera.get_dev_invincible());
     camera.set_camera_x(spawn_x);
     camera.set_camera_y(spawn_y);
     player.set_x(spawn_x);

@@ -43,6 +43,8 @@ void inflict_damage(Simulation *sim, EntityID const atk_id, EntityID const def_i
     if (!defender.has_component(kHealth)) return;
     DEBUG_ONLY(assert(!defender.pending_delete);)
     DEBUG_ONLY(assert(defender.has_component(kHealth));)
+    // the dev menu of the sandbox
+    if (defender.has_component(kRelations) && defender.get_dev_invincible()) return;
     if (type != DamageType::kLightning && sim->ent_alive(atk_id)) {
         Entity &attacker = sim->get_ent(atk_id);
         if (attacker.has_component(kPetal) && attacker.get_petal_id() == PetalID::kLightning) {

@@ -125,3 +125,23 @@ void Game::save_progress() {
     writer.write<uint8_t>(Serverbound::kProgressSave);
     socket.send(writer.packet, writer.at - writer.packet);
 }
+
+// the developer menu: the server only listens to these in the sandbox
+static void send_dev(uint8_t command, uint32_t arg, bool has_arg, bool big = false) {
+    Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
+    if (!Game::alive()) return;
+    writer.write<uint8_t>(Serverbound::kDevCommand);
+    writer.write<uint8_t>(command);
+    if (has_arg) {
+        if (big) writer.write<uint32_t>(arg);
+        else writer.write<uint8_t>(arg);
+    }
+    Game::socket.send(writer.packet, writer.at - writer.packet);
+}
+
+void Game::send_dev_set_level(uint32_t level) { send_dev(DevCommandID::kSetLevel, level, true); }
+void Game::send_dev_set_score(uint32_t score) { send_dev(DevCommandID::kSetScore, score, true, true); }
+void Game::send_dev_give_petal(uint8_t id) { send_dev(DevCommandID::kGivePetal, id, true); }
+void Game::send_dev_toggle_invincible() { send_dev(DevCommandID::kToggleInvincible, 0, false); }
+void Game::send_dev_spawn_mob(uint8_t id) { send_dev(DevCommandID::kSpawnMob, id, true); }
+void Game::send_dev_clear_mobs() { send_dev(DevCommandID::kClearMobs, 0, false); }

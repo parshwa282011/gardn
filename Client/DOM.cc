@@ -150,3 +150,9 @@ void DOM::toggle_fullscreen() {
         } catch {}
     });
 }
+
+uint8_t DOM::text_input_focused() {
+    return EM_ASM_INT({
+        return (document.activeElement && document.activeElement.tagName == "INPUT") ? 1 : 0;
+    });
+}

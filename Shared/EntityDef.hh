@@ -66,7 +66,8 @@ SINGLE(Camera, saving_progress, uint8_t)
 SINGLE(Relations, team, EntityID) \
 SINGLE(Relations, parent, EntityID) \
 SINGLE(Relations, color, uint8_t) \
-SINGLE(Relations, dev, uint8_t)
+SINGLE(Relations, dev, uint8_t) \
+SINGLE(Relations, dev_invincible, uint8_t)
 
 #define FIELDS_Flower \
 SINGLE(Flower, overlevel_timer, Float) \

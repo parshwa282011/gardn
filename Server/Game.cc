@@ -78,8 +78,11 @@ GameInstance::GameInstance(uint8_t mode) : simulation(), clients(), team_manager
 
 void GameInstance::init() {
     simulation.arena_info.set_gamemode(gamemode);
-    // the sandbox has no mobs of its own
-    if (gamemode != Gamemode::kSandbox)
+    if (gamemode == Gamemode::kSandbox) {
+        // mobs only in the PvP area (the right half), the normal area has none
+        for (uint32_t i = 0; i < SANDBOX_MOB_CAP; ++i)
+            Map::spawn_random_mob(&simulation, SANDBOX_PVP_LEFT + 200 + frand() * (SANDBOX_WIDTH - SANDBOX_PVP_LEFT - 400), 200 + frand() * (SANDBOX_HEIGHT - 400));
+    } else
         for (uint32_t i = 0; i < ENTITY_CAP / 2; ++i)
             Map::spawn_random_mob(&simulation, frand() * ARENA_WIDTH, frand() * ARENA_HEIGHT);
     if (gamemode == Gamemode::kTDM) {

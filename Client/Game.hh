@@ -50,6 +50,12 @@ namespace Game {
     extern uint8_t show_debug;
     extern uint8_t auto_delete;
     extern uint8_t gamemode;
+    // the developer menu of the sandbox (the \ key)
+    extern uint8_t show_dev_menu;
+    extern uint8_t dev_tab; // 0 petals, 1 mobs
+    extern std::string dev_level_text;
+    extern std::string dev_score_text;
+    extern std::string dev_search_text;
 
     extern uint8_t show_chat;
     extern std::string chat_text;
@@ -80,6 +86,12 @@ namespace Game {
     void send_chat(std::string const &);
     void switch_gamemode(uint8_t);
     void save_progress();
+    void send_dev_set_level(uint32_t);
+    void send_dev_set_score(uint32_t);
+    void send_dev_give_petal(uint8_t);
+    void send_dev_toggle_invincible();
+    void send_dev_spawn_mob(uint8_t);
+    void send_dev_clear_mobs();
     void on_message(uint8_t *, uint32_t);
     void poll_ui_event(Ui::ScreenEvent const &);
 };

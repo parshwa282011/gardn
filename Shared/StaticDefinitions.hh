@@ -53,14 +53,19 @@ namespace Gamemode {
     };
 }
 
-// The sandbox is a square in the corner of the map (inside the first zone): the
-// players are kept in it and the client draws only it.
-inline uint32_t const SANDBOX_SIZE = 4000;
+// The sandbox is two squares side by side in the corner of the map (inside the first
+// zone): the normal area on the left, where no mobs spawn, and the PvP area on the
+// right, where they do. The players are kept inside, the client draws only these.
+inline uint32_t const SANDBOX_WIDTH = 8000;
+inline uint32_t const SANDBOX_HEIGHT = 4000;
+inline uint32_t const SANDBOX_PVP_LEFT = SANDBOX_WIDTH / 2;
+// how many mobs the PvP area keeps (the zone's density would be too many for it)
+inline uint32_t const SANDBOX_MOB_CAP = 60;
 inline float arena_width_of(uint8_t gamemode) {
-    return gamemode == Gamemode::kSandbox ? SANDBOX_SIZE : ARENA_WIDTH;
+    return gamemode == Gamemode::kSandbox ? SANDBOX_WIDTH : ARENA_WIDTH;
 }
 inline float arena_height_of(uint8_t gamemode) {
-    return gamemode == Gamemode::kSandbox ? SANDBOX_SIZE : ARENA_HEIGHT;
+    return gamemode == Gamemode::kSandbox ? SANDBOX_HEIGHT : ARENA_HEIGHT;
 }
 
 namespace PetalID {

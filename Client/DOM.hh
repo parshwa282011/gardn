@@ -16,4 +16,5 @@ namespace DOM {
     void update_client(float);
     void cache_client();
     void toggle_fullscreen();
+    uint8_t text_input_focused();
 }

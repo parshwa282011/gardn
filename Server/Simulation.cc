@@ -40,8 +40,12 @@ static void calculate_leaderboard(Simulation *sim) {
 
 void Simulation::on_tick() {
     spatial_hash.refresh(ARENA_WIDTH, ARENA_HEIGHT);
-    // no mobs spawn by themselves in the sandbox
-    if (arena_info.gamemode != Gamemode::kSandbox && frand() < 1.0f / TPS) {
+    if (arena_info.gamemode == Gamemode::kSandbox) {
+        // mobs spawn by themselves only in the PvP area (the right half)
+        if (frand() < 1.0f / TPS)
+            for (uint32_t i = 0; i < 10 && zone_mob_counts[0] < SANDBOX_MOB_CAP; ++i)
+                Map::spawn_random_mob(this, SANDBOX_PVP_LEFT + 200 + frand() * (SANDBOX_WIDTH - SANDBOX_PVP_LEFT - 400), 200 + frand() * (SANDBOX_HEIGHT - 400));
+    } else if (frand() < 1.0f / TPS) {
         for (uint32_t i = 0; i < 10; ++i) {
             Vector v;
             if (Map::find_spawn_location(this, 500, v))
