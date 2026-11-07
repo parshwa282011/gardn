@@ -59,6 +59,14 @@ Element *Ui::make_title_input_box() {
                                 [](){ return Game::gamemode == Gamemode::kTDM; },
                                 { .fill = 0xffec6869, .line_width = 5, .round_radius = 3 }
                             ),
+                            new Ui::Button(100, 30,
+                                new Ui::StaticText(16, "Sandbox"),
+                                [](Element *elt, uint8_t e){
+                                    if (e == Ui::kClick) Game::switch_gamemode(Gamemode::kSandbox);
+                                },
+                                [](){ return Game::gamemode == Gamemode::kSandbox; },
+                                { .fill = 0xff9d7bf0, .line_width = 5, .round_radius = 3 }
+                            ),
                         }, 0, 10),
                         new Ui::StaticText(14, "(or press ENTER to spawn)"),
                         15, 0
@@ -98,6 +106,7 @@ Element *Ui::make_title_info_box() {
                 new Ui::StaticText(16, "Use mouse to move"),
                 new Ui::StaticText(16, "Right click to attack"),
                 new Ui::StaticText(16, "Left click to defend"),
+                new Ui::StaticText(16, "M to switch to keyboard movement"),
                 new Ui::StaticText(16, "ENTER to chat")
             }, 0, 5, { .no_animation = 1 }),
             new Ui::VContainer({
@@ -106,6 +115,7 @@ Element *Ui::make_title_info_box() {
                 new Ui::StaticText(16, "Use WASD or arrow keys to move"),
                 new Ui::StaticText(16, "SPACE to attack"),
                 new Ui::StaticText(16, "SHIFT to defend"),
+                new Ui::StaticText(16, "M to switch to mouse movement"),
                 new Ui::StaticText(16, "ENTER to chat")
             }, 0, 5, { .no_animation = 1 }),
             [](){
@@ -312,6 +322,14 @@ Element *Ui::make_debug_stats() {
 
 Element *Ui::make_link_buttons() {
     Element *elt = new Ui::HContainer({
+        new Ui::Button(170, 50,
+            new Ui::StaticText(16, "Forked from Rysteria"),
+            [](Element *elt, uint8_t e){
+                if (e == Ui::kClick) DOM::open_page("https://rysteria.pro");
+            },
+            nullptr,
+            { .fill = 0xff6b4fc4, .line_width = 4, .round_radius = 4 }
+        ),
         new Ui::Button(50, 50, 
             new Ui::StaticIcon([](Element *elt, Renderer &ctx){
                 ctx.scale(elt->width / 58);

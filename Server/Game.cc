@@ -78,8 +78,10 @@ GameInstance::GameInstance(uint8_t mode) : simulation(), clients(), team_manager
 
 void GameInstance::init() {
     simulation.arena_info.set_gamemode(gamemode);
-    for (uint32_t i = 0; i < ENTITY_CAP / 2; ++i)
-        Map::spawn_random_mob(&simulation, frand() * ARENA_WIDTH, frand() * ARENA_HEIGHT);
+    // the sandbox has no mobs of its own
+    if (gamemode != Gamemode::kSandbox)
+        for (uint32_t i = 0; i < ENTITY_CAP / 2; ++i)
+            Map::spawn_random_mob(&simulation, frand() * ARENA_WIDTH, frand() * ARENA_HEIGHT);
     if (gamemode == Gamemode::kTDM) {
         team_manager.add_team(ColorID::kBlue);
         team_manager.add_team(ColorID::kRed);
@@ -131,6 +133,7 @@ void GameInstance::remove_client(Client *client) {
 void GameInstance::save_progress(Client *client) {
     // saves belong to accounts; anonymous players cannot make them
     if (client->account_uuid.empty()) return;
+    if (gamemode == Gamemode::kSandbox) return;
     Entity &camera = simulation.get_ent(client->camera);
     Entity &player = simulation.get_ent(camera.get_player());
     player.last_damaged_by = NULL_ENTITY;
@@ -151,6 +154,8 @@ void GameInstance::save_progress(Client *client) {
 }
 
 void GameInstance::collect_backup(std::vector<BackupPlayer> &out) {
+    // nothing that happens in the sandbox is kept
+    if (gamemode == Gamemode::kSandbox) return;
     for (Client *client : clients) {
         // anonymous players have no account to give a save to; a player who is
         // not in the world has no loadout to lose (their save is already made)

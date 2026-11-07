@@ -47,9 +47,11 @@ void Game::send_inputs() {
     Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
     writer.write<uint8_t>(Serverbound::kClientInput);
     if (Input::freeze_input) {
+        // the flower stands still, but the petals still follow the buttons (mouse or
+        // SPACE/SHIFT), so they can be spread and pulled in from the box as well
         writer.write<float>(0);
         writer.write<float>(0);
-        writer.write<uint8_t>(0);
+        writer.write<uint8_t>(Input::game_inputs.flags);
     } else {
         writer.write<float>(Input::game_inputs.x);
         writer.write<float>(Input::game_inputs.y);
@@ -106,7 +108,8 @@ void Game::send_chat(std::string const &text) {
 
 void Game::switch_gamemode(uint8_t gamemode) {
     Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
-    if (Game::alive()) return;
+    // only the way out of the sandbox works while playing (the X)
+    if (Game::alive() && !(Game::simulation.arena_info.gamemode == Gamemode::kSandbox && gamemode != Gamemode::kSandbox)) return;
     writer.write<uint8_t>(Serverbound::kGamemodeSwitch);
     writer.write<uint8_t>(gamemode);
     socket.send(writer.packet, writer.at - writer.packet);

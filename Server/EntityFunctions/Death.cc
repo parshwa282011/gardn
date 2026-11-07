@@ -52,6 +52,7 @@ static void _add_score(Simulation *sim, EntityID const killer_id, Entity const &
 // a kill of another player's flower by a logged in player, for the leaderboards
 // (mobs do not count)
 static void _add_kill(Simulation *sim, EntityID const killer_id, Entity const &target) {
+    if (sim->arena_info.gamemode == Gamemode::kSandbox) return; // nothing counts there
     if (!sim->ent_exists(killer_id) || killer_id == target.id) return;
     Entity const &killer = sim->get_ent(killer_id);
     if (!killer.has_component(kFlower) || !sim->ent_exists(killer.get_parent())) return;

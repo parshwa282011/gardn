@@ -3,6 +3,7 @@
 #include <Shared/Binary.hh>
 #include <Shared/EntityDef.hh>
 
+#include <array>
 #include <cstdint>
 #include <set>
 #include <string>
@@ -36,6 +37,11 @@ public:
     uint8_t restoring_dev = 0;
     std::string restoring_name;
     uint64_t restoring_id = 0;
+    // what the player had before going into the sandbox (nothing that happens in the
+    // sandbox is kept): it is put back when they leave it
+    bool sandbox_snapshot = false;
+    uint32_t sandbox_respawn_level = 1;
+    std::array<PetalID::T, 2 * MAX_SLOT_COUNT> sandbox_inventory = {};
     Client();
     // `saves`: what the master has for the account, shown as progress entities
     void init(uint64_t, uint8_t, std::vector<struct PlayerProgress> const & = {});

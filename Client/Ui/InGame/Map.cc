@@ -69,7 +69,7 @@ Element *Ui::make_minimap() {
         new Ui::StaticText(20, "Minimap"),
         new Ui::Minimap(300)
     }, 20, 10, { 
-        .should_render = [](){ return Game::should_render_game_ui(); },
+        .should_render = [](){ return Game::should_render_game_ui() && Game::simulation.arena_info.gamemode != Gamemode::kSandbox; },
         .h_justify = Style::Right,
         .v_justify = Style::Bottom
     });

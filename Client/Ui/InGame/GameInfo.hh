@@ -56,6 +56,7 @@ namespace Ui {
     Element *make_leaderboard();
     Element *make_level_bar();
     Element *make_minimap();
+    Element *make_sandbox_exit();
     Element *make_overlevel_indicator();
     Element *make_saving_indicator();
     Element *make_mobile_attack_button();

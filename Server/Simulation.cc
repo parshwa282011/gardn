@@ -40,7 +40,8 @@ static void calculate_leaderboard(Simulation *sim) {
 
 void Simulation::on_tick() {
     spatial_hash.refresh(ARENA_WIDTH, ARENA_HEIGHT);
-    if (frand() < 1.0f / TPS) {
+    // no mobs spawn by themselves in the sandbox
+    if (arena_info.gamemode != Gamemode::kSandbox && frand() < 1.0f / TPS) {
         for (uint32_t i = 0; i < 10; ++i) {
             Vector v;
             if (Map::find_spawn_location(this, 500, v))

@@ -221,7 +221,8 @@ void Storage::retrieve() {
         if (len > 0) {
             Decoder reader(&StorageProtocol::buffer[0]);
             Game::gamemode = reader.read<uint8_t>();
-            if (Game::gamemode >= Gamemode::kNumGamemodes)
+            // nobody starts in the sandbox by accident: it is picked on the title screen
+            if (Game::gamemode >= Gamemode::kNumGamemodes || Game::gamemode == Gamemode::kSandbox)
                 Game::gamemode = 0;
         }
     }

@@ -54,7 +54,14 @@ void Game::render_game() {
     }
     {
         RenderContext context(&renderer);
-        for (ZoneDefinition const &def : MAP_DATA) {
+        if (simulation.arena_info.gamemode == Gamemode::kSandbox) {
+            // the sandbox is one square, with a wall around it
+            renderer.set_fill(MAP_DATA[0].color);
+            renderer.fill_rect(0, 0, SANDBOX_SIZE, SANDBOX_SIZE);
+            renderer.set_stroke(0x60000000);
+            renderer.set_line_width(12);
+            renderer.stroke_rect(-6, -6, SANDBOX_SIZE + 12, SANDBOX_SIZE + 12);
+        } else for (ZoneDefinition const &def : MAP_DATA) {
             renderer.set_fill(def.color);
             renderer.fill_rect(def.left, def.top, def.right - def.left, def.bottom - def.top);
             if (Map::difficulty_at_level(score_to_level(Game::score)) > def.difficulty) {

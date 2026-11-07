@@ -16,7 +16,8 @@ namespace Server {
     uint8_t OUTGOING_PACKET[MAX_PACKET_LEN] = {0};
     std::array<GameInstance, Gamemode::kNumGamemodes> games = {
         GameInstance(Gamemode::kFFA),
-        GameInstance(Gamemode::kTDM)
+        GameInstance(Gamemode::kTDM),
+        GameInstance(Gamemode::kSandbox)
     };
     std::array<uint32_t, PetalID::kNumPetals> petal_count_tracker = {0};
     volatile sig_atomic_t is_draining = false;

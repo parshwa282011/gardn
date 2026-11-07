@@ -123,8 +123,8 @@ Entity &summon_mob_near(Simulation *sim, Entity const &player, MobID::T mob_id) 
     float const angle = frand() * 2 * M_PI;
     float x = player.get_x() + distance * cosf(angle);
     float y = player.get_y() + distance * sinf(angle);
-    x = std::min(std::max(x, margin), (float) ARENA_WIDTH - margin);
-    y = std::min(std::max(y, margin), (float) ARENA_HEIGHT - margin);
+    x = std::min(std::max(x, margin), arena_width_of(sim->arena_info.gamemode) - margin);
+    y = std::min(std::max(y, margin), arena_height_of(sim->arena_info.gamemode) - margin);
     // a mob like the ones the zones spawn, without the zone bookkeeping
     return alloc_mob(sim, mob_id, x, y, NULL_ENTITY, [](Entity &mob){
         mob.immunity_ticks = TPS;
@@ -313,6 +313,11 @@ void player_spawn(Simulation *sim, Entity &camera, Entity &player) {
     ZoneDefinition const &zone = MAP_DATA[Map::get_suitable_difficulty_zone(power)];
     float spawn_x = lerp(zone.left, zone.right, frand());
     float spawn_y = lerp(zone.top, zone.bottom, frand());
+    if (sim->arena_info.gamemode == Gamemode::kSandbox) {
+        // anywhere in the square, away from its walls
+        spawn_x = lerp(300.0f, SANDBOX_SIZE - 300.0f, frand());
+        spawn_y = lerp(300.0f, SANDBOX_SIZE - 300.0f, frand());
+    }
     camera.set_camera_x(spawn_x);
     camera.set_camera_y(spawn_y);
     player.set_x(spawn_x);

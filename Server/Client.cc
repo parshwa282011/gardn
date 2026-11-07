@@ -46,18 +46,31 @@ void Client::init(uint64_t recovery_id, uint8_t gamemode, std::vector<PlayerProg
 void Client::move(GameInstance *new_game) {
     if (game == new_game) return;
     Entity &old_camera = game->simulation.get_ent(camera);
+    bool entering_sandbox = new_game->gamemode == Gamemode::kSandbox;
+    bool leaving_sandbox = game->gamemode == Gamemode::kSandbox;
+    if (entering_sandbox) {
+        sandbox_snapshot = true;
+        sandbox_respawn_level = old_camera.get_respawn_level();
+        for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i)
+            sandbox_inventory[i] = old_camera.get_inventory(i);
+    }
     // the saves are the entities of the old camera: they move with the player
     std::vector<PlayerProgress> saves = game->progress_of(this);
     game->simulation.request_delete(camera);
     new_game->add_client(this, NULL_ENTITY);
     game->show_progress_saves(this, saves);
     Entity &new_camera = game->simulation.get_ent(camera);
-    new_camera.set_respawn_level(old_camera.get_respawn_level());
-    for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i) {
-        PetalTracker::remove_petal(new_camera.get_inventory(i));
-        new_camera.set_inventory(i, old_camera.get_inventory(i));
-        PetalTracker::add_petal(new_camera.get_inventory(i));
+    // out of the sandbox the player gets back what they went in with (a player who
+    // joined in the sandbox has nothing to get back and starts as everyone does)
+    if (!leaving_sandbox || sandbox_snapshot) {
+        new_camera.set_respawn_level(leaving_sandbox ? sandbox_respawn_level : old_camera.get_respawn_level());
+        for (uint32_t i = 0; i < 2 * MAX_SLOT_COUNT; ++i) {
+            PetalTracker::remove_petal(new_camera.get_inventory(i));
+            new_camera.set_inventory(i, leaving_sandbox ? sandbox_inventory[i] : old_camera.get_inventory(i));
+            PetalTracker::add_petal(new_camera.get_inventory(i));
+        }
     }
+    if (leaving_sandbox) sandbox_snapshot = false;
     in_view.clear();
     seen_arena = 0;
 }
@@ -181,6 +194,8 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             if (client->check_invalid(UTF8Parser::is_valid_utf8(name))) return;
             for (char &c : pwd) c ^= pwd.capacity();
             uint8_t dev = pwd == "ez hax"; // feel free to use
+            // a save is never used up in the sandbox: nothing there is kept
+            if (client->game->gamemode == Gamemode::kSandbox) restore_id = 0;
 #ifdef WASM_SERVER
             if (restore_id != 0 && !client->account_uuid.empty()) {
                 // the save is handed over by the master (and gone from there)
@@ -313,16 +328,26 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             break;
         }
         case Serverbound::kGamemodeSwitch: {
-            if (client->alive()) break;
             if (client->check_invalid(validator.validate_uint8())) return;
             uint8_t gamemode = reader.read<uint8_t>();
             if (client->check_invalid(gamemode < Gamemode::kNumGamemodes)) return;
+            // the way out of the sandbox works while playing (the X on the screen)
+            bool leaving_sandbox = client->game->gamemode == Gamemode::kSandbox && gamemode != Gamemode::kSandbox;
+            if (client->alive()) {
+                if (!leaving_sandbox) break;
+                // the flower just goes: no drops, no death
+                Simulation *simulation = &client->game->simulation;
+                Entity &player = simulation->get_ent(simulation->get_ent(client->camera).get_player());
+                player.last_damaged_by = NULL_ENTITY;
+                BitMath::set(player.flags, EntityFlags::kIsDespawning);
+            }
             client->move(&Server::games[gamemode]);
             break;
         }
         case Serverbound::kProgressSave: {
             if (!client->alive()) break;
             if (client->account_uuid.empty()) break;
+            if (client->game->gamemode == Gamemode::kSandbox) break; // nothing is saved there
             Simulation *simulation = &client->game->simulation;
             Entity &camera = simulation->get_ent(client->camera);
             if (!simulation->ent_alive(camera.get_player())) break;

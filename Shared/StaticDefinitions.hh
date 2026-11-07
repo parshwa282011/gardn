@@ -47,8 +47,20 @@ namespace Gamemode {
     enum : uint8_t {
         kFFA,
         kTDM,
+        // a test world: one square, no mobs, nothing is saved to the account
+        kSandbox,
         kNumGamemodes
     };
+}
+
+// The sandbox is a square in the corner of the map (inside the first zone): the
+// players are kept in it and the client draws only it.
+inline uint32_t const SANDBOX_SIZE = 4000;
+inline float arena_width_of(uint8_t gamemode) {
+    return gamemode == Gamemode::kSandbox ? SANDBOX_SIZE : ARENA_WIDTH;
+}
+inline float arena_height_of(uint8_t gamemode) {
+    return gamemode == Gamemode::kSandbox ? SANDBOX_SIZE : ARENA_HEIGHT;
 }
 
 namespace PetalID {

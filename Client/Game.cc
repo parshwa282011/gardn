@@ -127,6 +127,9 @@ void Game::init() {
         Ui::make_minimap()
     );
     game_ui_window.add_child(
+        Ui::make_sandbox_exit()
+    );
+    game_ui_window.add_child(
         Ui::make_loadout_backgrounds()
     );
     game_ui_window.add_child(
@@ -466,6 +469,12 @@ void Game::tick(double time) {
 
     if (Input::keys_held_this_tick.contains(';'))
         show_debug = !show_debug;
+    // M: mouse <-> keyboard movement (the setting in the settings panel)
+    if (Input::keys_held_this_tick.contains('M') && Game::alive() && !Game::show_chat && !Input::is_mobile) {
+        Input::keyboard_movement = !Input::keyboard_movement;
+        Input::freeze_input = 0;
+        Game::show_notice(Input::keyboard_movement ? "Keyboard movement (WASD / arrows). Press M to switch back." : "Mouse movement. Press M to switch back.");
+    }
     if (Input::keys_held_this_tick.contains('\r')) {
         if (!Game::alive())
             Game::spawn_in();
