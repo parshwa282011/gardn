@@ -6,7 +6,23 @@
 
 #include <Client/Game.hh>
 
+#include <emscripten/wget.h>
+
+#include <string>
+#include <vector>
+
 using namespace Ui;
+
+// The top of the list is not in the client: it is /changelog.txt (rrolf/Client/public,
+// the same file Rysteria reads), so a change that is the same in both games is written
+// once. The format is described at the top of the file. This game shows the days with
+// [all] and [gardn] lines. Below them are the older entries, which are in the code.
+struct GeneralDay {
+    std::string date;
+    std::vector<std::string> items;
+};
+static std::vector<GeneralDay> general;
+static bool general_dirty = false;
 
 static Element *make_divider() {
     return new Element(400, 6, { .fill = 0x20000000, .line_width = 3, .round_radius = 3, .v_justify = Style::Top });
@@ -31,17 +47,84 @@ static Element *make_entries(std::initializer_list<std::string const> contents) 
     return elt;
 }
 
+static Element *make_listed_entries(std::vector<std::string> const &contents) {
+    Element *elt = new Ui::VContainer({}, 5, 3, { .h_justify = Style::Left, .v_justify = Style::Top });
+    for (std::string const &str : contents)
+        elt->add_child(make_paragraph(str));
+    return elt;
+}
+
+// the days of changelog.txt, rebuilt when the file arrives
+class GeneralSection final : public Ui::VContainer {
+public:
+    GeneralSection() : VContainer({}, 0, 10, { .h_justify = Style::Left, .v_justify = Style::Top }) {}
+
+    virtual void refactor() override {
+        if (general_dirty) {
+            general_dirty = false;
+            children.clear();
+            for (GeneralDay const &day : general) {
+                Element *date = make_date(day.date);
+                Element *items = make_listed_entries(day.items);
+                Element *divider = make_divider();
+                for (Element *elt : {date, items, divider}) {
+                    elt->style.v_justify = Style::Top;
+                    add_child(elt);
+                }
+            }
+        }
+        VContainer::refactor();
+    }
+};
+
+static void parse_general(std::string const &text) {
+    general.clear();
+    uint32_t items = 0;
+    size_t pos = 0;
+    GeneralDay *day = nullptr;
+    std::string pending_date;
+    while (pos < text.size()) {
+        size_t end = text.find('\n', pos);
+        if (end == std::string::npos) end = text.size();
+        std::string line = text.substr(pos, end - pos);
+        pos = end + 1;
+        while (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty() || line[0] == '#') continue;
+        if (line.rfind("== ", 0) == 0) {
+            pending_date = line.substr(3);
+            day = nullptr;
+            continue;
+        }
+        if (line[0] != '[') continue;
+        size_t close = line.find(']');
+        if (close == std::string::npos) continue;
+        std::string tag = line.substr(1, close - 1);
+        if (tag != "all" && tag != "gardn") continue;
+        std::string item = line.substr(close + 1);
+        while (!item.empty() && item[0] == ' ') item.erase(0, 1);
+        if (item.empty()) continue;
+        // the day is added when its first change for this game comes
+        if (day == nullptr) {
+            general.push_back({ pending_date, {} });
+            day = &general.back();
+        }
+        day->items.push_back(item);
+        ++items;
+    }
+    // the entries are what the Changelog button counts to shake when there is news
+    Game::changelog_entries += items;
+    general_dirty = true;
+}
+
+static void general_loaded(void *, void *buffer, int size) {
+    parse_general(std::string(static_cast<char const *>(buffer), size));
+}
+
+static void general_failed(void *) {}
+
 static Element *make_changelog_contents() {
     Element *elt = new Ui::VContainer({
-        make_date("November 7th 2026"),
-        make_entries({
-            "Added the Sandbox mode, next to FFA and TDM: two areas, a normal one without mobs and a PVP one where mobs spawn. Nothing in it is saved to your account. Leave it with the X at the top left",
-            "Press \\ in the sandbox for the developer menu: set your level, get any petal, summon mobs, clear them, be invincible",
-            "Press M to switch between mouse and keyboard movement",
-            "In mouse movement the buttons now also spread and pull in the petals while the mouse is in the box at the bottom",
-            "Added a link to Rysteria, where this game is forked from"
-        }),
-        make_divider(),
+        new GeneralSection(),
         make_date("October 5th 2026"),
         make_entries({
             "Automated progress save and restore system",
@@ -228,5 +311,6 @@ Element *Ui::make_changelog() {
         .v_justify = Style::Bottom
     });
     Ui::Panel::changelog = elt;
+    emscripten_async_wget_data("/changelog.txt", nullptr, general_loaded, general_failed);
     return elt;
 }
