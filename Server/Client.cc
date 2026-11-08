@@ -391,8 +391,11 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
                     if (client->check_invalid(mob_id < MobID::kNumMobs)) return;
                     if (MOB_DATA[mob_id].rarity == RarityID::kUnique) break; // they drop unique petals
                     // the world has room for a limited number of entities
+                    // (the ones the PvP area spawns by itself do not count)
                     uint32_t mobs = 0;
-                    simulation->for_each<kMob>([&](Simulation *, Entity &) { ++mobs; });
+                    simulation->for_each<kMob>([&](Simulation *, Entity &mob) {
+                        if (!BitMath::at(mob.flags, EntityFlags::kSpawnedFromZone)) ++mobs;
+                    });
                     if (mobs >= 300) break;
                     summon_mob_near(simulation, player, (MobID::T) mob_id);
                     break;

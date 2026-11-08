@@ -51,7 +51,14 @@ void Map::remove_mob(Simulation *sim, uint32_t zone) {
 void Map::spawn_random_mob(Simulation *sim, float x, float y) {
     uint32_t zone_id = Map::get_zone_from_pos(x, y);
     struct ZoneDefinition const &zone = MAP_DATA[zone_id];
-    if (zone.density * (zone.right - zone.left) * (zone.bottom - zone.top) / (500 * 500) < sim->zone_mob_counts[zone_id]) return;
+    float density = zone.density;
+    float area = (zone.right - zone.left) * (zone.bottom - zone.top);
+    if (sim->arena_info.gamemode == Gamemode::kSandbox) {
+        // the PvP area of the sandbox (the only place that spawns mobs there)
+        density = SANDBOX_PVP_DENSITY;
+        area = (SANDBOX_WIDTH - SANDBOX_PVP_LEFT) * SANDBOX_HEIGHT;
+    }
+    if (density * area / (500 * 500) < sim->zone_mob_counts[zone_id]) return;
     auto spawns = zone.spawns.size() > 0 ? zone.spawns : MAP_DATA[Map::get_random_zone_with_spawns()].spawns;
     float sum = 0;
     for (SpawnChance const &s : spawns)

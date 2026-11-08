@@ -61,8 +61,10 @@ namespace Gamemode {
 inline uint32_t const SANDBOX_WIDTH = 8000;
 inline uint32_t const SANDBOX_HEIGHT = 4000;
 inline uint32_t const SANDBOX_PVP_LEFT = SANDBOX_WIDTH / 2;
-// how many mobs the PvP area keeps (the zone's density would be too many for it)
-inline uint32_t const SANDBOX_MOB_CAP = 60;
+// The PvP area has 25 times the mob density of the first zone (which is 1): the zones
+// keep density * area / (500 * 500) mobs, so 1600 here
+inline uint32_t const SANDBOX_PVP_DENSITY = 25;
+inline uint32_t const SANDBOX_MOB_CAP = SANDBOX_PVP_DENSITY * (SANDBOX_WIDTH - SANDBOX_PVP_LEFT) * SANDBOX_HEIGHT / (500 * 500);
 inline float arena_width_of(uint8_t gamemode) {
     return gamemode == Gamemode::kSandbox ? SANDBOX_WIDTH : ARENA_WIDTH;
 }
