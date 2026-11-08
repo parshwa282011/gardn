@@ -10,8 +10,8 @@
 // The petal icons of the web pages (the petal stats page) are made with the game itself:
 // open /gardn/?iconsheet and the game draws every petal as its loadout does (the
 // group of petals, without the tile and the name: the page puts the rarity colour
-// behind it), instead of playing. scripts/gen-icons.mjs takes the picture of that
-// (headless Chrome) and saves it in rrolf/Client/public/icons/.
+// behind it), instead of playing. scripts/gen-icons.mjs (run by the build) takes the
+// picture of that in headless Chrome and cuts every petal out as a png.
 //
 // ICON_COLUMNS tiles per row: the petal with id i is at column i % ICON_COLUMNS,
 // row i / ICON_COLUMNS, each tile ICON_CELL units square
@@ -35,7 +35,8 @@ void Game::render_icon_sheet() {
         window["iconSheetInfo"]["columns"] = $0;
         window["iconSheetInfo"]["rows"] = $1;
         window["iconSheetInfo"]["cell"] = $2;
-    }, ICON_COLUMNS, rows, ICON_CELL);
+        window["iconSheetInfo"]["count"] = $3;
+    }, ICON_COLUMNS, rows, ICON_CELL, (uint32_t) PetalID::kNumPetals);
     renderer.reset_transform();
     for (PetalID::T id = 1; id < PetalID::kNumPetals; ++id) {
         RenderContext c(&renderer);
