@@ -299,6 +299,10 @@ void Game::tick(double time) {
     simulation.tick();
     
     renderer.reset();
+    if (icon_sheet_mode()) {
+        render_icon_sheet();
+        return;
+    }
     game_ui_renderer.set_dimensions(renderer.width, renderer.height);
     game_ui_renderer.reset();
 

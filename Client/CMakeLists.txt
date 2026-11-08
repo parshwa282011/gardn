@@ -23,6 +23,7 @@ set(SRCS
     Debug.cc
     DOM.cc
     Game.cc
+    IconSheet.cc
     Input.cc
     Main.cc
     Network.cc

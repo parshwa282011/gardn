@@ -28,6 +28,9 @@ namespace Game {
     extern std::string notice;
     extern double notice_until;
     void show_notice(std::string const &);
+    // /gardn/#iconsheet: the game draws its icons for the web pages instead of playing
+    bool icon_sheet_mode();
+    void render_icon_sheet();
     extern std::array<uint8_t, PetalID::kNumPetals> seen_petals;
     extern std::array<uint8_t, MobID::kNumMobs> seen_mobs;
     

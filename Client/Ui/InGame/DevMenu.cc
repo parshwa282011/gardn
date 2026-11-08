@@ -93,9 +93,27 @@ DevMobRow::DevMobRow(MobID::T mob_id) :
 
 void DevMobRow::on_render(Renderer &ctx) {
     draw_row_background(*this, ctx);
+    {
+        // the mob as the mob gallery draws it, small, in the colour of its rarity
+        RenderContext c(&ctx);
+        float box = height - 6;
+        ctx.translate(-width / 2 + height / 2 + 2, 0);
+        ctx.set_fill(0x40000000);
+        ctx.begin_path();
+        ctx.round_rect(-box / 2, -box / 2, box, box, 3);
+        ctx.fill();
+        ctx.clip();
+        MobData const &data = MOB_DATA[id];
+        float radius = (data.radius.upper + data.radius.lower) / 2;
+        if (id != MobID::kDigger) ctx.rotate(-3 * M_PI / 4);
+        if (id == MobID::kBeetle || id == MobID::kMassiveBeetle) ctx.translate(-5, 0);
+        // the whole body fits in the box (a mob with segments shows its head)
+        ctx.scale(box * 0.42f / radius);
+        draw_static_mob(id, ctx, { .radius = radius, .flower_attrs = { .color = ColorID::kGray } });
+    }
     RenderContext c(&ctx);
     char const *name = MOB_DATA[id].name;
-    ctx.translate(-width / 2 + 10 + Renderer::get_ascii_text_size(name) * 13 / 2, 0);
+    ctx.translate(-width / 2 + height + 10 + Renderer::get_ascii_text_size(name) * 13 / 2, 0);
     ctx.draw_text(name, { .fill = RARITY_COLORS[MOB_DATA[id].rarity], .size = 13, .stroke_scale = 0.12 });
 }
 
