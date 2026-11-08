@@ -16,7 +16,9 @@
 // ICON_COLUMNS tiles per row: the petal with id i is at column i % ICON_COLUMNS,
 // row i / ICON_COLUMNS, each tile ICON_CELL units square
 static uint32_t const ICON_COLUMNS = 12;
-static float const ICON_CELL = 64;
+// (a petal that is a clump of several is wider than the petal itself: the tiles are big
+// enough for the widest one with room to spare, so that no petal reaches into the next)
+static float const ICON_CELL = 128;
 
 bool Game::icon_sheet_mode() {
     static int requested = -1;
@@ -41,7 +43,7 @@ void Game::render_icon_sheet() {
     for (PetalID::T id = 1; id < PetalID::kNumPetals; ++id) {
         RenderContext c(&renderer);
         renderer.translate((id % ICON_COLUMNS + 0.5f) * ICON_CELL * dpr, (id / ICON_COLUMNS + 0.5f) * ICON_CELL * dpr);
-        renderer.scale(ICON_CELL * dpr / 64 * 1.4f);
+        renderer.scale(dpr * 1.4f);
         if (PETAL_DATA[id].radius > 20) renderer.scale(20 / PETAL_DATA[id].radius);
         draw_static_petal(id, renderer);
     }
