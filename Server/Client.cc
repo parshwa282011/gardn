@@ -477,6 +477,8 @@ void Client::spawn(std::string const &name, uint8_t dev, PlayerProgress const *p
     if (game->gamemode != Gamemode::kSandbox) {
         player.immunity_ticks = SPAWN_PROTECTION_SECONDS * TPS;
         player.ghost_ticks = SPAWN_PROTECTION_SECONDS * TPS;
+        // the curse of the leader does not touch a new flower (Process/Curse.cc)
+        player.curse_free_ticks = SPAWN_CURSE_FREE_SECONDS * TPS;
     }
     std::cout << "player_spawn" << (dev ? "_dev " : " ") << name_or_unnamed(name)
         << " <" << +game->gamemode << "," << +player.id.hash << "," << +player.id.id << ">\n";
