@@ -312,11 +312,12 @@ void player_spawn(Simulation *sim, Entity &camera, Entity &player) {
     uint32_t power = Map::difficulty_at_level(camera.get_respawn_level());
     ZoneDefinition const &zone = MAP_DATA[Map::get_suitable_difficulty_zone(power)];
     float spawn_x = lerp(zone.left, zone.right, frand());
-    float spawn_y = lerp(zone.top, zone.bottom, frand());
+    // everybody spawns at the bottom of the zone (a strip of SPAWN_BOTTOM_STRIP above the wall)
+    float spawn_y = lerp(zone.bottom - SPAWN_BOTTOM_MARGIN - SPAWN_BOTTOM_STRIP, zone.bottom - SPAWN_BOTTOM_MARGIN, frand());
     if (sim->arena_info.gamemode == Gamemode::kSandbox) {
-        // the normal area (the left half, no mobs), away from the walls
+        // the normal area (the left half, no mobs), at the bottom, away from the walls
         spawn_x = lerp(300.0f, SANDBOX_PVP_LEFT - 300.0f, frand());
-        spawn_y = lerp(300.0f, SANDBOX_HEIGHT - 300.0f, frand());
+        spawn_y = lerp(SANDBOX_HEIGHT - SPAWN_BOTTOM_MARGIN - SPAWN_BOTTOM_STRIP, SANDBOX_HEIGHT - SPAWN_BOTTOM_MARGIN, frand());
     }
     // the invincibility of the dev menu stays on when the player respawns
     player.set_dev_invincible(camera.get_dev_invincible());

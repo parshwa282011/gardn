@@ -13,6 +13,8 @@ inline uint32_t const SPAWN_PROTECTION_SECONDS = 5;
 // them, the damage at level 90) leaves a player alone: the protection and some time for
 // the mobs around the spawn to lose interest
 inline uint32_t const SPAWN_CURSE_FREE_SECONDS = 10;
+inline float const SPAWN_BOTTOM_MARGIN = 100;
+inline float const SPAWN_BOTTOM_STRIP = 150;
 inline uint32_t const ARENA_WIDTH = 40000;
 inline uint32_t const ARENA_HEIGHT = 4000;
 
