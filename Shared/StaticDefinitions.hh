@@ -8,10 +8,7 @@
 inline uint32_t const MAX_LEVEL = 100;
 inline uint32_t const TPS = 20;
 // how long a new flower in FFA and TDM goes through everything and is ignored by mobs
-inline uint32_t const SPAWN_PROTECTION_SECONDS = 5;
-// how long after spawning or restoring the curse of the leader (the mobs around going for
-// them, the damage at level 90) leaves a player alone: the protection and some time for
-// the mobs around the spawn to lose interest
+inline uint32_t const SPAWN_PROTECTION_SECONDS = 10;
 inline uint32_t const SPAWN_CURSE_FREE_SECONDS = 10;
 inline float const SPAWN_BOTTOM_MARGIN = 100;
 inline float const SPAWN_BOTTOM_STRIP = 150;
