@@ -37,6 +37,10 @@ namespace Master {
     // this account. Counted by the host and sent every minute, and on exit. What
     // the saves add up to the master works out itself.
     void add_kill(std::string const &uuid);
+    // the score a logged in player had when their flower died, for the "Highest score"
+    // leaderboard: a death counts even when the player does not save it. Sent with the
+    // kills, the master keeps the highest
+    void add_death_score(std::string const &uuid, uint32_t score);
     // send everything pending now (shutdown); the host keeps the process alive
     // until the request finishes
     void flush();

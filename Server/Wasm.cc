@@ -298,7 +298,7 @@ EM_JS(void, master_init_js, (), {
         const M = Module.master = {
             url: (process.env["MASTER_URL"] || "http://127.0.0.1:55554"),
             secret: process.env["SERVER_SECRET"] || "",
-            /* only what could not be sent yet: uuid -> { add: Map(id -> save), remove: Set(id), tries, kills } */
+            /* only what could not be sent yet: uuid -> { add: Map(id -> save), remove: Set(id), tries, kills, best } */
             pending: new Map(),
             mythic: [], /* petal ids of the Mythic rarity (Master::init), the master adds them up */
             chain: Promise.resolve()
@@ -319,7 +319,7 @@ EM_JS(void, master_init_js, (), {
         };
         M.entry = function(uuid) {
             let e = M.pending.get(uuid);
-            if (!e) { e = { add: new Map(), remove: new Set(), tries: 0, kills: 0 }; M.pending.set(uuid, e); }
+            if (!e) { e = { add: new Map(), remove: new Set(), tries: 0, kills: 0, best: 0 }; M.pending.set(uuid, e); }
             return e;
         };
         /* put changes back after a failed send (newer changes win) */
@@ -331,6 +331,7 @@ EM_JS(void, master_init_js, (), {
             const cur = M.entry(uuid);
             cur.tries = Math.max(cur.tries, old.tries);
             cur.kills += old.kills;
+            cur.best = Math.max(cur.best, old.best);
             old.add.forEach(function(save, id) {
                 if (!cur.remove.has(id) && !cur.add.has(id)) cur.add.set(id, save);
             });
@@ -347,6 +348,8 @@ EM_JS(void, master_init_js, (), {
                     const c = { "uuid": t[0], "add": Array.from(t[1].add.values()), "remove": Array.from(t[1].remove) };
                     /* kills since the last report; the master adds up the saves itself */
                     if (t[1].kills) c["kills"] = t[1].kills;
+                    /* the highest score a flower of the account died with since the last report */
+                    if (t[1].best) c["best_seen"] = t[1].best;
                     if (t[1].add.size || t[1].remove.size) c["mythic_ids"] = M.mythic;
                     return c;
                 });
@@ -457,6 +460,13 @@ void Master::request_restore(int ws_id, std::string const &uuid, uint64_t restor
 
 void Master::add_kill(std::string const &uuid) {
     EM_ASM({ Module.master.entry(UTF8ToString($0)).kills++; }, uuid.c_str());
+}
+
+void Master::add_death_score(std::string const &uuid, uint32_t score) {
+    EM_ASM({
+        const e = Module.master.entry(UTF8ToString($0));
+        if ($1 > e.best) e.best = $1;
+    }, uuid.c_str(), score);
 }
 
 void Master::flush() {

@@ -70,6 +70,10 @@ void entity_on_death(Simulation *sim, Entity const &ent) {
     }
     if (ent.has_component(kFlower) && sim->ent_alive(ent.get_parent())) {
         Entity &camera = sim->get_ent(ent.get_parent());
+        // the score the flower dies with counts for the "Highest score" leaderboard, saved or not
+        if (sim->arena_info.gamemode != Gamemode::kSandbox && camera.client != nullptr &&
+            !camera.client->account_uuid.empty() && ent.get_score() > 0)
+            Master::add_death_score(camera.client->account_uuid, ent.get_score());
         if (sim->ent_exists(ent.last_damaged_by)) {
             Entity const &killer = sim->get_ent(ent.last_damaged_by);
             if (killer.has_component(kName)) camera.set_killed_by(killer.get_name());

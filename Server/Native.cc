@@ -97,6 +97,7 @@ void Master::request_account(int, std::string const &, std::string const &) {}
 void Master::save(std::string const &, PlayerProgress const &) {}
 void Master::request_restore(int, std::string const &, uint64_t) {}
 void Master::add_kill(std::string const &) {}
+void Master::add_death_score(std::string const &, uint32_t) {}
 void Master::flush() {}
 void Master::backup(std::vector<BackupPlayer> const &) {}
 bool Master::summon_password_ok(std::string const &given) {
