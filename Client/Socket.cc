@@ -18,7 +18,7 @@ uint8_t OUTGOING_PACKET[1 * 1024] = {0};
 // A browser can refuse to give the page its storage (Edge's tracking prevention,
 // private windows, a page inside someone else's frame): reading it then throws.
 // So the login is looked for in three places, none of which can break the page:
-//   1. window.gardnLogin, handed over in the address by the Rysteria page's Gardn
+//   1. window.gardnLogin, handed over in the address by the Parteria page's Gardn
 //      button and removed from the address at once (see public/index.html)
 //   2. localStorage
 //   3. sessionStorage (where index.html keeps the handoff for a reload)

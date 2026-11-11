@@ -14,7 +14,7 @@
 using namespace Ui;
 
 // The top of the list is not in the client: it is /changelog.txt (rrolf/Client/public,
-// the same file Rysteria reads), so a change that is the same in both games is written
+// the same file Parteria reads), so a change that is the same in both games is written
 // once. The format is described at the top of the file. This game shows the days with
 // [all] and [gardn] lines. Below them are the older entries, which are in the code.
 struct GeneralDay {
