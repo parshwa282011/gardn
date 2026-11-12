@@ -950,12 +950,13 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     {
         .name = "Iris",
         .description = "Its poison lingers for a very long time",
-        .health = 25.0,
+        .health = 
+        5.0,
         .damage = 5.0,
         .radius = 7.0,
         .reload = 5.0,
         .count = 1,
-        .rarity = RarityID::kMythic,
+        .rarity = RarityID::kLegendary,
         .attributes = { 
             .poison_damage = {
                 .damage = 10.0,
@@ -980,10 +981,10 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     },
     {
         .name = "Fastest",
-        .description = "Even lighter than the faster petal, it makes your other petals spin much faster",
+        .description = "A big golden Faster petal: your other petals spin much faster",
         .health = 8.0,
         .damage = 10.0,
-        .radius = 7.0,
+        .radius = 12.0,
         .reload = 0.5,
         .count = 1,
         .rarity = RarityID::kLegendary,
