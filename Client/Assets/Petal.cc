@@ -12,6 +12,7 @@ void draw_static_petal_single(PetalID::T id, Renderer &ctx, PetalRenderAttribute
     switch(id) {
         case PetalID::kNone:
             break;
+        case PetalID::kLegendaryDandelion:
         case PetalID::kDandelion:
             ctx.set_stroke(0xff222222);
             ctx.round_line_cap();

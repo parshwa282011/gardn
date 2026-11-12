@@ -188,20 +188,6 @@ void Game::render_game() {
         _apply_damage_filter(renderer, ent);
         render_flower(renderer, ent);
     });
-    simulation.for_each<kPetal>([](Simulation *sim, Entity const &ent){
-        if (PETAL_DATA[ent.get_petal_id()].attributes.period <= 0) return;
-        if (!sim->ent_exists(ent.get_parent())) return;
-        uint32_t stored = sim->get_ent(ent.get_parent()).get_sponge_stored();
-        if (stored == 0) return;
-        char text[16];
-        if (stored >= 1000000) snprintf(text, sizeof(text), "%.1fm", stored / 1000000.0f);
-        else if (stored >= 10000) snprintf(text, sizeof(text), "%.1fk", stored / 1000.0f);
-        else snprintf(text, sizeof(text), "%u", stored);
-        RenderContext context(&renderer);
-        renderer.translate(ent.get_x(), ent.get_y() - ent.get_radius() - 10);
-        renderer.set_global_alpha(1 - ent.deletion_animation);
-        renderer.draw_text(text, { .size = 14 });
-    });
     simulation.for_each<kAnimation>([](Simulation *sim, Entity const &ent){
         RenderContext context(&renderer);
         render_animation(sim, renderer, ent);

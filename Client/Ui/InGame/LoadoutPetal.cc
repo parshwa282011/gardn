@@ -204,12 +204,31 @@ UiLoadoutPetal::UiLoadoutPetal(uint8_t pos) : Element(60, 60),
     Ui::UiLoadout::petal_slots[static_pos] = this;
 }
 
+// the damage a sponge holds, written on top of its slot
+static void draw_sponge_stored(Renderer &ctx) {
+    if (!Game::simulation.ent_exists(Game::camera_id)) return;
+    EntityID player_id = Game::simulation.get_ent(Game::camera_id).get_player();
+    if (!Game::simulation.ent_exists(player_id)) return;
+    uint32_t stored = Game::simulation.get_ent(player_id).get_sponge_stored();
+    if (stored == 0) return;
+    char text[16];
+    if (stored >= 1000000) snprintf(text, sizeof(text), "%.1fm", stored / 1000000.0f);
+    else if (stored >= 10000) snprintf(text, sizeof(text), "%.1fk", stored / 1000.0f);
+    else snprintf(text, sizeof(text), "%u", stored);
+    RenderContext context(&ctx);
+    ctx.translate(0, -17);
+    ctx.draw_text(text, { .size = 16 });
+}
+
 void UiLoadoutPetal::on_render(Renderer &ctx) {
     if (last_id == PetalID::kNone) return;
     ctx.scale(width / 60);
-    if (static_pos < Game::loadout_count)
+    if (static_pos < Game::loadout_count) {
         draw_loadout_background(ctx, last_id, (float) reload);
-    else
+        // (only the slots that are in use: the sponges of the inventory do nothing)
+        if (PETAL_DATA[last_id].attributes.period > 0)
+            draw_sponge_stored(ctx);
+    } else
         draw_loadout_background(ctx, last_id);
 }
 

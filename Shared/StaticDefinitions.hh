@@ -149,6 +149,7 @@ namespace PetalID {
         kMythicIris,
         kMythicSponge,
         kFastest,
+        kLegendaryDandelion,
         kNumPetals
     };
 };

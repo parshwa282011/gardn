@@ -145,7 +145,7 @@ void inflict_damage(Simulation *sim, EntityID const atk_id, EntityID const def_i
             defender.slow_ticks = attacker.slow_inflict;
 
         if (attacker.has_component(kPetal)) {
-            if (attacker.get_petal_id() == PetalID::kDandelion && defender.dandy_ticks < 10 * TPS)
+            if ((attacker.get_petal_id() == PetalID::kDandelion || attacker.get_petal_id() == PetalID::kLegendaryDandelion) && defender.dandy_ticks < 10 * TPS)
                 defender.dandy_ticks = 10 * TPS;
             else if (attacker.get_petal_id() == PetalID::kHoney && defender.honey_ticks < 5 * TPS)
                 defender.honey_ticks = 5 * TPS;

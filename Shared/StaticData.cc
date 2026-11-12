@@ -991,6 +991,22 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
             .extra_rotation_speed = 2.0
         }
     },
+    {
+        .name = "Dandelion",
+        .description = "Prevents healing on whatever it hits, and you can shoot it at your enemies",
+        .health = 5.0,
+        .damage = 25.0,
+        .radius = 10.0,
+        .reload = 1.0,
+        .count = 1,
+        .rarity = RarityID::kLegendary,
+        .attributes = {
+            .secondary_reload = 0.5,
+            .defend_only = 1,
+            .icon_angle = 1,
+            .rotation_style = PetalAttributes::kFollowRot
+        }
+    },
 }};
 
 std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{

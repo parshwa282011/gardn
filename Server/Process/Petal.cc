@@ -28,6 +28,7 @@ void tick_petal_behavior(Simulation *sim, Entity &petal) {
     if (BitMath::at(petal.flags, EntityFlags::kIsDespawning)) {
         switch (petal.get_petal_id()) {
             case PetalID::kMissile:
+            case PetalID::kLegendaryDandelion:
             case PetalID::kGuidedMissile: {
                 petal.acceleration.unit_normal(petal.get_angle()).set_magnitude(4 * PLAYER_ACCELERATION);
                 break;
@@ -117,6 +118,7 @@ void tick_petal_behavior(Simulation *sim, Entity &petal) {
                 entity_set_despawn_tick(petal, 3 * TPS);
             }
             break;
+        case PetalID::kLegendaryDandelion:
         case PetalID::kGuidedMissile:
             if (BitMath::at(player.input, InputFlags::kAttacking)) {
                 EntityID target_id = find_nearest_enemy_within_angle(sim, petal, 1000, M_PI / 4);
