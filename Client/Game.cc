@@ -153,6 +153,9 @@ void Game::init() {
         Ui::make_leaderboard()
     );
     game_ui_window.add_child(
+        Ui::make_color_legend()
+    );
+    game_ui_window.add_child(
         Ui::make_overlevel_indicator()
     );
     game_ui_window.add_child(

@@ -1,6 +1,11 @@
 #include <Client/Ui/InGame/GameInfo.hh>
 
 #include <Client/Ui/Container.hh>
+#include <Client/Ui/StaticText.hh>
+
+#include <Client/DOM.hh>
+#include <Client/Input.hh>
+#include <Client/StaticData.hh>
 
 #include <Client/Game.hh>
 
@@ -68,6 +73,36 @@ void LeaderboardSlot::on_render(Renderer &ctx) {
     ctx.fill_text(format_string.c_str());
 }
 
+static Element *leaderboard_element = nullptr;
+
+Element *Ui::make_color_legend() {
+    Element *legend = new Ui::VContainer({
+        new Ui::StaticText(18, "Colors")
+    }, 12, 6, {
+        .fill = 0xff555555,
+        .line_width = 6,
+        .round_radius = 7,
+        .should_render = [](){
+            return Game::should_render_game_ui() && !Game::show_chat && !DOM::text_input_focused() &&
+                Input::keys_held.contains('\'');
+        },
+        .no_polling = 1
+    });
+    for (uint8_t i = 0; i < RarityID::kNumRarities; ++i)
+        legend->add_child(new Ui::HContainer({
+            new Ui::Element(18, 18, { .fill = RARITY_COLORS[i], .line_width = 3, .round_radius = 3 }),
+            new Ui::StaticText(14, RARITY_NAMES[i])
+        }, 0, 8, { .h_justify = Style::Left }));
+    legend->style.h_justify = Style::Right;
+    legend->style.v_justify = Style::Top;
+    legend->x = -20;
+    // right under the leaderboard, wherever its bottom is
+    legend->style.animate = [](Element *elt, Renderer &) {
+        elt->y = 20 + (leaderboard_element != nullptr ? leaderboard_element->height : 0) + 10;
+    };
+    return legend;
+}
+
 Element *Ui::make_leaderboard() {
     Container *lb_header = new Ui::Container({
         new Ui::DynamicText(18, [](){
@@ -94,5 +129,6 @@ Element *Ui::make_leaderboard() {
     leaderboard->style.v_justify = Style::Top;
     leaderboard->x = -20;
     leaderboard->y = 20;
+    leaderboard_element = leaderboard;
     return leaderboard;
 }
