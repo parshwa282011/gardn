@@ -104,7 +104,7 @@ Element *Ui::make_petal_gallery() {
         new Ui::StaticText(25, "Petal Gallery"),
         new Ui::HContainer({
             new Ui::ToggleButton(24, &Game::auto_delete_select),
-            new Ui::StaticText(14, "Select petals to auto-delete (click them)")
+            new Ui::StaticText(14, "Pick petals for auto-delete (click them)")
         }, 0, 10, { .h_justify = Style::Left }),
         make_scroll()
     }, 15, 10, { 

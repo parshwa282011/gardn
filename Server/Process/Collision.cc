@@ -39,14 +39,6 @@ void pickup_drop(Simulation *sim, Entity &player, Entity &drop) {
     if (!sim->ent_alive(player.get_parent())) return;
     if (drop.immunity_ticks > 0) return;
 
-    // the petals the player picked in the petal gallery never go into the inventory
-    PetalID::T drop_id = drop.get_drop_id();
-    if (drop_id > PetalID::kBasic && drop_id < PetalID::kNumPetals &&
-        BitMath::at(player.auto_delete_mask[drop_id / 8], drop_id % 8)) {
-        _auto_delete_drop(sim, player, drop);
-        return;
-    }
-
     for (uint32_t i = 0; i <  player.get_loadout_count() + MAX_SLOT_COUNT; ++i) {
         if (player.get_loadout_ids(i) != PetalID::kNone) continue;
         player.set_loadout_ids(i, drop.get_drop_id());
@@ -61,7 +53,12 @@ void pickup_drop(Simulation *sim, Entity &player, Entity &drop) {
     if (!BitMath::at(player.settings, SettingFlags::kAutoDelete)) return;
     uint32_t power = Map::difficulty_at_level(score_to_level(player.get_score()));
     uint8_t rarity = PETAL_DATA[drop.get_drop_id()].rarity;
-    if (rarity < power || (rarity == power && score_to_level(player.get_score()) == MAX_LEVEL))
+    // the petals picked in the petal gallery are deleted too (only with the loadout and
+    // the inventory full, and the setting on, like the rest)
+    PetalID::T drop_id = drop.get_drop_id();
+    bool picked = drop_id > PetalID::kBasic && drop_id < PetalID::kNumPetals &&
+        BitMath::at(player.auto_delete_mask[drop_id / 8], drop_id % 8);
+    if (picked || rarity < power || (rarity == power && score_to_level(player.get_score()) == MAX_LEVEL))
         _auto_delete_drop(sim, player, drop);
 }
 
