@@ -947,6 +947,22 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
             .defend_only = 1
         }
     },
+    {
+        .name = "Iris",
+        .description = "Its poison lingers for a very long time",
+        .health = 25.0,
+        .damage = 5.0,
+        .radius = 7.0,
+        .reload = 5.0,
+        .count = 1,
+        .rarity = RarityID::kMythic,
+        .attributes = { 
+            .poison_damage = {
+                .damage = 10.0,
+                .time = 18.0
+            }
+        }
+    },
 }};
 
 std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{

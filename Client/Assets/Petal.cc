@@ -286,6 +286,15 @@ void draw_static_petal_single(PetalID::T id, Renderer &ctx, PetalRenderAttribute
             ctx.fill();
             break;
         }
+        case PetalID::kMythicIris:
+            ctx.set_fill(0xff7a2fd6);
+            ctx.set_stroke(0xff5f25a8);
+            ctx.set_line_width(3);
+            ctx.begin_path();
+            ctx.arc(0,0,r);
+            ctx.fill();
+            ctx.stroke();
+            break;
         case PetalID::kBlueIris:
             ctx.set_fill(0xff39e9f1);
             ctx.set_stroke(0xff2dbac0);

@@ -144,6 +144,7 @@ namespace PetalID {
         kHoney,
         kMagnet,
         kButterfly,
+        kMythicIris,
         kNumPetals
     };
 };
