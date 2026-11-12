@@ -30,7 +30,7 @@ static char _get_key_from_code(std::string const &code) {
         {"KeyS", 'S'},{"KeyT", 'T'},{"KeyU", 'U'},{"KeyV", 'V'},
         {"KeyW", 'W'},{"KeyX", 'X'},{"KeyY", 'Y'},{"KeyZ", 'Z'},
         {"MetaLeft", 91},{"Minus", '-'},{"Period", '.'},
-        {"Quote", '\''},{"Semicolon", ';'},{"ShiftLeft", '\x10'},
+        {"Quote", Input::QuoteKey},{"Semicolon", ';'},{"ShiftLeft", '\x10'},
         {"ShiftRight", '\x10'},{"Slash", '/'},{"Space", ' '},{"Tab", 9}};
     auto place = KEYCODE_MAP.find(code);
     if (place == KEYCODE_MAP.end()) return 0;

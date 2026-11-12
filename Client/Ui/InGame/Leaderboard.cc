@@ -9,7 +9,9 @@
 
 #include <Client/Game.hh>
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
 #include <iostream>
 
@@ -73,28 +75,77 @@ void LeaderboardSlot::on_render(Renderer &ctx) {
     ctx.fill_text(format_string.c_str());
 }
 
+// What the colors of the dots of the observer mean: the mobs picked in the mob gallery,
+// each with its color. It draws its own box from the top, which grows with the list.
+class ObserverLegend final : public Ui::Element {
+public:
+    ObserverLegend() : Element(420, 0, {
+        .should_render = [](){
+            return Game::should_render_game_ui() && !Game::show_chat && !DOM::text_input_focused() &&
+                Input::keys_held.contains(Input::QuoteKey);
+        },
+        .h_justify = Style::Right,
+        .v_justify = Style::Top,
+        .no_polling = 1
+    }) {}
+
+    virtual void on_render(Renderer &ctx) override {
+        std::vector<MobID::T> ids;
+        for (MobID::T id = 0; id < MobID::kNumMobs; ++id)
+            if (Game::tracked_mobs[id]) ids.push_back(id);
+        float const col_w = 190;
+        float const row_h = 24;
+        float const pad = 12;
+        float const head_h = 30;
+        uint32_t const per_col = 12;
+        uint32_t cols = ids.size() > per_col ? 2 : 1;
+        uint32_t rows = ids.empty() ? 1 : std::min<uint32_t>(ids.size(), per_col);
+        float box_w = pad * 2 + cols * col_w;
+        float box_h = pad * 2 + head_h + rows * row_h;
+        // the box hangs from the top right of the element
+        ctx.translate(width / 2 - box_w / 2, 0);
+        ctx.set_fill(0xff555555);
+        ctx.set_stroke(Renderer::HSV(0xff555555, 0.8));
+        ctx.set_line_width(6);
+        ctx.round_line_join();
+        ctx.begin_path();
+        ctx.round_rect(-box_w / 2, 0, box_w, box_h, 7);
+        ctx.fill();
+        ctx.stroke();
+        {
+            RenderContext context(&ctx);
+            ctx.translate(0, pad + head_h / 2);
+            ctx.draw_text("Observer dots", { .size = 18 });
+        }
+        if (ids.empty()) {
+            RenderContext context(&ctx);
+            ctx.translate(0, pad + head_h + row_h / 2);
+            ctx.draw_text("Pick mobs in the Mob Gallery", { .size = 14 });
+            return;
+        }
+        for (uint32_t i = 0; i < ids.size(); ++i) {
+            RenderContext context(&ctx);
+            float left = -box_w / 2 + pad + (i / per_col) * col_w;
+            ctx.translate(left, pad + head_h + (i % per_col) * row_h + row_h / 2);
+            ctx.set_fill(mob_track_color(ids[i]));
+            ctx.set_stroke(0xff222222);
+            ctx.set_line_width(2.5);
+            ctx.begin_path();
+            ctx.arc(8, 0, 8);
+            ctx.fill();
+            ctx.stroke();
+            char const *name = MOB_DATA[ids[i]].name;
+            float text_w = Renderer::get_ascii_text_size(name) * 14;
+            ctx.translate(8 * 2 + 8 + text_w / 2, 0);
+            ctx.draw_text(name, { .size = 14 });
+        }
+    }
+};
+
 static Element *leaderboard_element = nullptr;
 
 Element *Ui::make_color_legend() {
-    Element *legend = new Ui::VContainer({
-        new Ui::StaticText(18, "Colors")
-    }, 12, 6, {
-        .fill = 0xff555555,
-        .line_width = 6,
-        .round_radius = 7,
-        .should_render = [](){
-            return Game::should_render_game_ui() && !Game::show_chat && !DOM::text_input_focused() &&
-                Input::keys_held.contains('\'');
-        },
-        .no_polling = 1
-    });
-    for (uint8_t i = 0; i < RarityID::kNumRarities; ++i)
-        legend->add_child(new Ui::HContainer({
-            new Ui::Element(18, 18, { .fill = RARITY_COLORS[i], .line_width = 3, .round_radius = 3 }),
-            new Ui::StaticText(14, RARITY_NAMES[i])
-        }, 0, 8, { .h_justify = Style::Left }));
-    legend->style.h_justify = Style::Right;
-    legend->style.v_justify = Style::Top;
+    Element *legend = new ObserverLegend();
     legend->x = -20;
     // right under the leaderboard, wherever its bottom is
     legend->style.animate = [](Element *elt, Renderer &) {

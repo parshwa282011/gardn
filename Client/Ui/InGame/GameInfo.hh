@@ -56,7 +56,7 @@ namespace Ui {
     };
 
     Element *make_leaderboard();
-    // the colors of the petals (the rarities), shown under the leaderboard while ' is held
+    // what the colors of the observer's dots mean, shown under the leaderboard while ' is held
     Element *make_color_legend();
     Element *make_level_bar();
     Element *make_minimap();

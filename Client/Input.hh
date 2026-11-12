@@ -7,6 +7,10 @@
 #include <vector>
 
 namespace Input {
+    // The key code of the apostrophe. The keys are chars, and the arrows are their key
+    // codes (37-40): the apostrophe cannot be its own char (39), that is ArrowRight.
+    constexpr char QuoteKey = 1;
+
     enum MouseButton {
         LeftMouse = 0,
         RightMouse = 1
