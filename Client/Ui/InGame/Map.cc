@@ -3,6 +3,7 @@
 #include <Client/Ui/Container.hh>
 #include <Client/Ui/StaticText.hh>
 #include <Client/Game.hh>
+#include <Client/StaticData.hh>
 
 #include <Shared/Map.hh>
 
@@ -50,7 +51,7 @@ void Minimap::on_render(Renderer &ctx) {
     float const dot = arena_w / 40;
     float const dot_line = arena_w / 120;
     Game::simulation.for_each<kDot>([&](Simulation *sim, Entity const &ent){
-        if (ent.get_color() == ColorID::kGreen) return;
+        if (ent.get_color() == ColorID::kGreen || ent.get_tracked_mob() != 0) return;
         if (ent.get_parent() == camera.get_player()) return;
         RenderContext c(&ctx);
         ctx.translate(ent.get_x(), ent.get_y());
@@ -65,7 +66,7 @@ void Minimap::on_render(Renderer &ctx) {
         ctx.stroke();
     });
     Game::simulation.for_each<kDot>([&](Simulation *sim, Entity const &ent){
-        if (ent.get_color() != ColorID::kGreen) return;
+        if (ent.get_color() != ColorID::kGreen || ent.get_tracked_mob() != 0) return;
         if (ent.get_parent() == camera.get_player()) return;
         RenderContext c(&ctx);
         ctx.translate(ent.get_x(), ent.get_y());
@@ -76,6 +77,21 @@ void Minimap::on_render(Renderer &ctx) {
         ctx.set_line_width(dot_line);
         ctx.begin_path();
         ctx.arc(0, 0, dot);
+        ctx.fill();
+        ctx.stroke();
+    });
+    // the mobs an observer follows: a dot of the color of the mob
+    Game::simulation.for_each<kDot>([&](Simulation *sim, Entity const &ent){
+        if (ent.get_tracked_mob() == 0) return;
+        uint32_t color = mob_track_color(ent.get_tracked_mob() - 1);
+        RenderContext c(&ctx);
+        ctx.translate(ent.get_x(), ent.get_y());
+        ctx.set_global_alpha(1 - ent.deletion_animation);
+        ctx.set_fill(color);
+        ctx.set_stroke(0xff222222);
+        ctx.set_line_width(dot_line);
+        ctx.begin_path();
+        ctx.arc(0, 0, dot * 0.8);
         ctx.fill();
         ctx.stroke();
     });

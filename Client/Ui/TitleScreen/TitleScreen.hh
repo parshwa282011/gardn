@@ -55,6 +55,7 @@ namespace Ui {
         GalleryMob(MobID::T, float);
 
         virtual void on_render(Renderer &) override;
+        virtual void on_event(uint8_t) override;
     };
 
     class ProgressPetalSlot final : public Element {

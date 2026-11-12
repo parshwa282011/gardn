@@ -3,12 +3,18 @@
 #include <Shared/Simulation.hh>
 #include <Shared/Entity.hh>
 #include <Shared/Map.hh>
+#include <Shared/StaticData.hh>
 
 #include <cmath>
 #include <iostream>
 
+static bool _no_collision(Entity const &ent) {
+    return ent.has_component(kPetal) && PETAL_DATA[ent.get_petal_id()].attributes.no_collision;
+}
+
 static bool _should_interact(Entity const &ent1, Entity const &ent2) {
     if (ent1.pending_delete || ent2.pending_delete) return false;
+    if (_no_collision(ent1) || _no_collision(ent2)) return false;
     // a flower that just spawned goes through everything (but still picks up drops)
     if ((ent1.ghost_ticks > 0 && !ent2.has_component(kDrop)) ||
         (ent2.ghost_ticks > 0 && !ent1.has_component(kDrop))) return false;
@@ -19,9 +25,27 @@ static bool _should_interact(Entity const &ent1, Entity const &ent2) {
     return false;
 }
 
+static void _auto_delete_drop(Simulation *sim, Entity &player, Entity &drop) {
+    delete_petal(sim, player, drop.get_drop_id());
+    drop.set_deleted_by(player.id);
+    drop.set_x(player.get_x());
+    drop.set_y(player.get_y());
+    BitMath::unset(drop.flags, EntityFlags::kIsDespawning);
+    sim->request_delete(drop.id);
+    //peaceful transfer, no petal tracking needed
+}
+
 void pickup_drop(Simulation *sim, Entity &player, Entity &drop) {
     if (!sim->ent_alive(player.get_parent())) return;
     if (drop.immunity_ticks > 0) return;
+
+    // the petals the player picked in the petal gallery never go into the inventory
+    PetalID::T drop_id = drop.get_drop_id();
+    if (drop_id > PetalID::kBasic && drop_id < PetalID::kNumPetals &&
+        BitMath::at(player.auto_delete_mask[drop_id / 8], drop_id % 8)) {
+        _auto_delete_drop(sim, player, drop);
+        return;
+    }
 
     for (uint32_t i = 0; i <  player.get_loadout_count() + MAX_SLOT_COUNT; ++i) {
         if (player.get_loadout_ids(i) != PetalID::kNone) continue;
@@ -37,15 +61,8 @@ void pickup_drop(Simulation *sim, Entity &player, Entity &drop) {
     if (!BitMath::at(player.settings, SettingFlags::kAutoDelete)) return;
     uint32_t power = Map::difficulty_at_level(score_to_level(player.get_score()));
     uint8_t rarity = PETAL_DATA[drop.get_drop_id()].rarity;
-    if (rarity < power || (rarity == power && score_to_level(player.get_score()) == MAX_LEVEL)) {
-        delete_petal(sim, player, drop.get_drop_id());
-        drop.set_deleted_by(player.id);
-        drop.set_x(player.get_x());
-        drop.set_y(player.get_y());
-        BitMath::unset(drop.flags, EntityFlags::kIsDespawning);
-        sim->request_delete(drop.id);
-        //peaceful transfer, no petal tracking needed
-    }
+    if (rarity < power || (rarity == power && score_to_level(player.get_score()) == MAX_LEVEL))
+        _auto_delete_drop(sim, player, drop);
 }
 
 #define NO(component) (!ent1.has_component(component) && !ent2.has_component(component))

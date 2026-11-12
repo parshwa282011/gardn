@@ -160,12 +160,14 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             Simulation *simulation = &client->game->simulation;
             Entity &camera = simulation->get_ent(client->camera);
             Entity &player = simulation->get_ent(camera.get_player());
-            if (client->check_invalid(
-                validator.validate_float() &&
+            bool valid = validator.validate_float() &&
                 validator.validate_float() &&
                 validator.validate_uint8() &&
-                validator.validate_uint8()
-            )) return;
+                validator.validate_uint8() &&
+                validator.validate_uint8();
+            for (uint32_t i = 0; i < AUTO_DELETE_MASK_BYTES + TRACKED_MOB_MASK_BYTES; ++i)
+                valid = valid && validator.validate_uint8();
+            if (client->check_invalid(valid)) return;
             float x = reader.read<float>();
             float y = reader.read<float>();
             if (x == 0 && y == 0) player.acceleration.set(0,0);
@@ -179,6 +181,11 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             }
             player.input = reader.read<uint8_t>();
             player.settings = reader.read<uint8_t>();
+            player.zoom = reader.read<uint8_t>();
+            for (uint32_t i = 0; i < AUTO_DELETE_MASK_BYTES; ++i)
+                player.auto_delete_mask[i] = reader.read<uint8_t>();
+            for (uint32_t i = 0; i < TRACKED_MOB_MASK_BYTES; ++i)
+                player.tracked_mob_mask[i] = reader.read<uint8_t>();
             break;
         }
         case Serverbound::kClientSpawn: {

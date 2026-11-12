@@ -237,6 +237,20 @@ Entity &alloc_dot(Simulation *sim, Entity const &parent) {
     return dot;
 }
 
+Entity &alloc_tracker_dot(Simulation *sim, Entity const &camera, Entity const &mob) {
+    Entity &dot = sim->alloc_ent();
+    dot.add_component(kPhysics);
+    dot.set_x(mob.get_x());
+    dot.set_y(mob.get_y());
+    dot.add_component(kRelations);
+    dot.set_parent(camera.id);
+    dot.add_component(kDot);
+    // (0 is no mob: the dots of the players and of the leader have it)
+    dot.set_tracked_mob(mob.get_mob_id() + 1);
+    dot.tracked_target = mob.id;
+    return dot;
+}
+
 Entity &alloc_progress(Simulation *sim, struct PlayerProgress &progress, Entity const &parent) {
     Entity &ent = sim->alloc_ent();
     ent.add_component(kRelations);

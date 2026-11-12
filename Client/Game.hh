@@ -52,6 +52,20 @@ namespace Game {
     extern uint8_t on_game_screen;
     extern uint8_t show_debug;
     extern uint8_t auto_delete;
+    // the petals picked in the petal gallery: deleted on touch instead of picked up
+    extern std::array<uint8_t, PetalID::kNumPetals> auto_delete_petals;
+    // the gallery button: clicking a petal there marks / unmarks it
+    extern uint8_t auto_delete_select;
+    // auto attack / auto defend (K and L): held as if the button was down while the
+    // player is pressing neither. With both on the flower attacks and defends at once
+    extern uint8_t hold_attack;
+    extern uint8_t hold_defense;
+    // the mobs picked in the mob gallery: an observer shows them on the minimap
+    extern std::array<uint8_t, MobID::kNumMobs> tracked_mobs;
+    // the gallery button: clicking a mob there picks / unpicks it
+    extern uint8_t track_select;
+    // scroll zoom of the antennae / observer: 0 the normal view, 1 the full view of the petal
+    extern float zoom;
     extern uint8_t gamemode;
     // the developer menu of the sandbox (the \ key)
     extern uint8_t show_dev_menu;

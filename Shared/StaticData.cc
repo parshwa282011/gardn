@@ -511,7 +511,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     },
     {
         .name = "Observer",
-        .description = "The one who sees all",
+        .description = "The one who sees all. Mobs you select in the mob gallery show up as colored dots on the minimap",
         .health = 0.0,
         .damage = 0.0,
         .radius = 12.5,
@@ -961,6 +961,34 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
                 .damage = 10.0,
                 .time = 18.0
             }
+        }
+    },
+    {
+        .name = "Sponge",
+        .description = "Soaks up unlimited damage and slowly releases it over time. Cannot be broken, only removed",
+        .health = 1000000.0,
+        .damage = 0.0,
+        .radius = 12.0,
+        .reload = 2.5,
+        .count = 1,
+        .rarity = RarityID::kMythic,
+        .attributes = {
+            .period = 20.0,
+            .defend_only = 1,
+            .no_collision = 1
+        }
+    },
+    {
+        .name = "Fastest",
+        .description = "Even lighter than the faster petal, it makes your other petals spin much faster",
+        .health = 8.0,
+        .damage = 10.0,
+        .radius = 7.0,
+        .reload = 0.5,
+        .count = 1,
+        .rarity = RarityID::kLegendary,
+        .attributes = {
+            .extra_rotation_speed = 2.0
         }
     },
 }};

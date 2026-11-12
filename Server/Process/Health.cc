@@ -4,6 +4,7 @@
 #include <Shared/Simulation.hh>
 #include <Shared/Entity.hh>
 
+#include <cmath>
 #include <iostream>
 
 void tick_health_behavior(Simulation *sim, Entity &ent) {
@@ -18,6 +19,12 @@ void tick_health_behavior(Simulation *sim, Entity &ent) {
     if (get_sponge_period(sim, ent) > 0) {
         inflict_damage(sim, ent.last_damaged_by, ent.id, ent.delayed_damage[0], DamageType::kSponge);
         ent.delayed_damage.push_back(0);
+    }
+    if (ent.has_component(kFlower)) {
+        float stored = 0;
+        for (uint32_t i = 0; i < ent.delayed_damage.size(); ++i)
+            stored += ent.delayed_damage[i];
+        ent.set_sponge_stored((uint32_t) std::lround(stored));
     }
     if (ent.dandy_ticks > 0) --ent.dandy_ticks;
     ent.shield = fclamp(ent.shield - ent.shield / (25 * TPS), 0, ent.max_health);

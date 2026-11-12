@@ -24,16 +24,20 @@ static bool _yggdrasil_revival_clause(Simulation *sim, Entity &player) {
 
 game_tick_t get_sponge_period(Simulation *sim, Entity &player) {
     if (!player.has_component(kFlower)) return 0;
+    game_tick_t best = 0;
     for (uint32_t i = 0; i < player.get_loadout_count(); ++i) {
         LoadoutSlot &slot = player.loadout[i];
-        if (slot.get_petal_id() != PetalID::kSponge) continue;
+        game_tick_t period = PETAL_DATA[slot.get_petal_id()].attributes.period * TPS;
+        if (period <= best) continue;
         for (uint32_t j = 0; j < slot.size(); ++j) {
             LoadoutPetal &petal_slot = slot.petals[j];
-            if (sim->ent_alive(petal_slot.ent_id))
-                return PETAL_DATA[slot.get_petal_id()].attributes.period * TPS;
+            if (sim->ent_alive(petal_slot.ent_id)) {
+                best = period;
+                break;
+            }
         }
     }
-    return 0;
+    return best;
 }
 
 void inflict_damage(Simulation *sim, EntityID const atk_id, EntityID const def_id, float amt, uint8_t type) {

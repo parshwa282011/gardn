@@ -22,6 +22,14 @@ Element *Ui::make_settings_panel() {
             new Ui::StaticText(16, "Movement helper")
         }, 0, 10, {.h_justify = Style::Left }),
         new Ui::HContainer({
+            new Ui::ToggleButton(30, &Game::hold_attack),
+            new Ui::StaticText(16, "Auto attack [K]")
+        }, 0, 10, {.h_justify = Style::Left }),
+        new Ui::HContainer({
+            new Ui::ToggleButton(30, &Game::hold_defense),
+            new Ui::StaticText(16, "Auto defend [L]")
+        }, 0, 10, {.h_justify = Style::Left }),
+        new Ui::HContainer({
             new Ui::ToggleButton(30, &Game::auto_delete),
             new Ui::StaticText(16, "Auto-delete drops")
         }, 0, 10, {.h_justify = Style::Left }),

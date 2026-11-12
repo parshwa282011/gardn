@@ -31,6 +31,8 @@ static void _update_client(Simulation *sim, Client *client) {
             in_view.insert(dot_id);
     }
     in_view.insert(camera.progress_saves.begin(), camera.progress_saves.end());
+    for (EntityID dot_id : camera.tracker_dots)
+        if (sim->ent_exists(dot_id)) in_view.insert(dot_id);
     Writer writer(Server::OUTGOING_PACKET);
     writer.write<uint8_t>(Clientbound::kClientUpdate);
     writer.write<uint8_t>(client->seen_arena);

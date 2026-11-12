@@ -56,6 +56,13 @@ namespace Game {
     uint8_t on_game_screen = 0;
     uint8_t show_debug = 0;
     uint8_t auto_delete = 0;
+    std::array<uint8_t, PetalID::kNumPetals> auto_delete_petals = {};
+    uint8_t auto_delete_select = 0;
+    uint8_t hold_attack = 0;
+    uint8_t hold_defense = 0;
+    std::array<uint8_t, MobID::kNumMobs> tracked_mobs = {};
+    uint8_t track_select = 0;
+    float zoom = 1;
     uint8_t gamemode = 0;
 
     uint8_t show_chat = 0;
@@ -480,6 +487,14 @@ void Game::tick(double time) {
             if (Game::show_dev_menu && Ui::dev_menu_contains_mouse())
                 Input::game_inputs = {};
         }
+        // nothing pressed: the auto attack / auto defend of K and L stand in
+        if (!BitMath::at(Input::game_inputs.flags, InputFlags::kAttacking) &&
+            !BitMath::at(Input::game_inputs.flags, InputFlags::kDefending)) {
+            if (Game::hold_attack) BitMath::set(Input::game_inputs.flags, InputFlags::kAttacking);
+            if (Game::hold_defense) BitMath::set(Input::game_inputs.flags, InputFlags::kDefending);
+        }
+        if (!Game::show_dev_menu && Input::wheel_delta != 0)
+            Game::zoom = fclamp(Game::zoom + Input::wheel_delta * 0.002f, 0, 1);
         send_inputs();
     } else
         Input::game_inputs = {};
@@ -491,6 +506,17 @@ void Game::tick(double time) {
         Input::keyboard_movement = !Input::keyboard_movement;
         Input::freeze_input = 0;
         Game::show_notice(Input::keyboard_movement ? "Keyboard movement (WASD / arrows). Press M to switch back." : "Mouse movement. Press M to switch back.");
+    }
+    // K: auto attack, L: auto defend (both on: attack and defend at the same time)
+    if (Game::alive() && !show_chat && !show_dev_menu && !DOM::text_input_focused()) {
+        if (Input::keys_held_this_tick.contains('K')) {
+            hold_attack ^= 1;
+            Game::show_notice(hold_attack ? "Auto attack on. Press K to turn it off." : "Auto attack off.");
+        }
+        if (Input::keys_held_this_tick.contains('L')) {
+            hold_defense ^= 1;
+            Game::show_notice(hold_defense ? "Auto defend on. Press L to turn it off." : "Auto defend off.");
+        }
     }
     // the developer menu (\ opens and closes it, ESC closes it): only in the sandbox, for
     // everybody in it. Not while typing in a text field

@@ -1,5 +1,6 @@
 #include <Client/Ui/TitleScreen/TitleScreen.hh>
 
+#include <Client/Ui/Button.hh>
 #include <Client/Ui/Container.hh>
 #include <Client/Ui/StaticText.hh>
 #include <Client/Ui/Extern.hh>
@@ -18,22 +19,40 @@ GalleryMob::GalleryMob(MobID::T id, float w) :
 
 void GalleryMob::on_render(Renderer &ctx) {
     Element::on_render(ctx);
-    ctx.begin_path();
-    ctx.round_rect(-width / 2, -height / 2, width, height, style.round_radius);
-    ctx.clip();
-    struct MobData const &data = MOB_DATA[id];
-    if (id != MobID::kDigger)
-        ctx.rotate(-3*M_PI/4);
-    if (id == MobID::kBeetle || id == MobID::kMassiveBeetle)
-        ctx.translate(-5,0);
-    float radius = (data.radius.upper + data.radius.lower) / 2;
-    if (radius > width * 0.5) ctx.scale(0.5 * width / radius);
-    ctx.scale(0.5);
-    draw_static_mob(id, ctx, { .radius = radius, .flower_attrs = { .color = ColorID::kGray } });
-    if (data.attributes.segments > 1) {
-        ctx.translate(-2 * radius, 0);
-        draw_static_mob(id, ctx, { .radius = radius, .flags = 1<<MobRenderFlags::kBodySegment, .flower_attrs = { .color = ColorID::kGray } });
+    {
+        RenderContext context(&ctx);
+        ctx.begin_path();
+        ctx.round_rect(-width / 2, -height / 2, width, height, style.round_radius);
+        ctx.clip();
+        struct MobData const &data = MOB_DATA[id];
+        if (id != MobID::kDigger)
+            ctx.rotate(-3*M_PI/4);
+        if (id == MobID::kBeetle || id == MobID::kMassiveBeetle)
+            ctx.translate(-5,0);
+        float radius = (data.radius.upper + data.radius.lower) / 2;
+        if (radius > width * 0.5) ctx.scale(0.5 * width / radius);
+        ctx.scale(0.5);
+        draw_static_mob(id, ctx, { .radius = radius, .flower_attrs = { .color = ColorID::kGray } });
+        if (data.attributes.segments > 1) {
+            ctx.translate(-2 * radius, 0);
+            draw_static_mob(id, ctx, { .radius = radius, .flags = 1<<MobRenderFlags::kBodySegment, .flower_attrs = { .color = ColorID::kGray } });
+        }
     }
+    if (Game::tracked_mobs[id]) {
+        // the dot the observer shows for this mob on the minimap
+        ctx.set_fill(mob_track_color(id));
+        ctx.set_stroke(0xff222222);
+        ctx.set_line_width(2.5);
+        ctx.begin_path();
+        ctx.arc(width / 2 - 10, -height / 2 + 10, 7);
+        ctx.fill();
+        ctx.stroke();
+    }
+}
+
+void GalleryMob::on_event(uint8_t event) {
+    if (event == kClick && Game::track_select && Game::seen_mobs[id])
+        Game::tracked_mobs[id] ^= 1;
 }
 
 static Element *make_mob_drops(MobID::T id) {
@@ -141,6 +160,10 @@ static Element *make_scroll() {
 Element *Ui::make_mob_gallery() {
     Element *elt = new Ui::VContainer({
         new Ui::StaticText(25, "Mob Gallery"),
+        new Ui::HContainer({
+            new Ui::ToggleButton(24, &Game::track_select),
+            new Ui::StaticText(14, "Select mobs for the observer (click them)")
+        }, 0, 10, { .h_justify = Style::Left }),
         make_scroll()
     }, 15, 10, { 
         .fill = 0xff5a9fdb,

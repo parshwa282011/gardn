@@ -18,6 +18,8 @@ Entity &alloc_petal(Simulation *, PetalID::T, Entity const &);
 Entity &alloc_web(Simulation *, float, Entity const &);
 Entity &alloc_chat(Simulation *, std::string &, Entity const &);
 Entity &alloc_dot(Simulation *, Entity const &);
+// the dot an observer shows for a mob: it belongs to the camera and follows the mob
+Entity &alloc_tracker_dot(Simulation *, Entity const &camera, Entity const &mob);
 Entity &alloc_progress(Simulation *, struct PlayerProgress &, Entity const &);
 Entity &alloc_camera(Simulation *, EntityID const);
 Entity &alloc_cpu_camera(Simulation *, EntityID const);

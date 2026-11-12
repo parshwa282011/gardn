@@ -14,6 +14,7 @@ void tick_health_behavior(Simulation *, Entity &);
 void tick_petal_behavior(Simulation *, Entity &);
 void tick_player_behavior(Simulation *, Entity &);
 void tick_player_ai_behavior(Simulation *, Entity &);
+void tick_tracking_behavior(Simulation *);
 void tick_segment_behavior(Simulation *, Entity &);
 void tick_score_behavior(Simulation *, Entity &);
 void on_collide(Simulation *, Entity &, Entity &);

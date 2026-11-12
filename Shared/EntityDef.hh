@@ -74,6 +74,7 @@ SINGLE(Flower, overlevel_timer, Float) \
 SINGLE(Flower, saving_timer, Float) \
 SINGLE(Flower, loadout_count, uint8_t) \
 SINGLE(Flower, face_flags, uint8_t) \
+SINGLE(Flower, sponge_stored, uint32_t) \
 SINGLE(Flower, equip_flags, uint8_t) \
 SINGLE(Flower, leaderboard_pos, uint8_t) \
 MULTIPLE(Flower, loadout_ids, PetalID::T, 2 * MAX_SLOT_COUNT) \
@@ -112,7 +113,8 @@ SINGLE(Name, nametag_visible, uint8_t)
 #define FIELDS_Chat \
 SINGLE(Chat, text, std::string)
 
-#define FIELDS_Dot
+#define FIELDS_Dot \
+SINGLE(Dot, tracked_mob, uint8_t)
 
 #define FIELDS_Animation \
 SINGLE(Animation, anim_type, uint8_t)
@@ -136,6 +138,11 @@ MULTIPLE(Progress, saved_loadout, PetalID::T, 2 * MAX_SLOT_COUNT)
     SINGLE(flags, uint16_t, =0) \
     SINGLE(input, uint8_t, =0) \
     SINGLE(settings, uint8_t, =0) \
+    SINGLE(zoom, uint8_t, =255) \
+    SINGLE(auto_delete_mask, auto_delete_mask_t, ={}) \
+    SINGLE(tracked_mob_mask, tracked_mob_mask_t, ={}) \
+    SINGLE(tracked_target, EntityID, =NULL_ENTITY) \
+    SINGLE(tracker_dots, std::vector<EntityID>, ={}) \
     \
     SINGLE(slow_ticks, game_tick_t, =0) \
     SINGLE(slow_inflict, game_tick_t, =0) \

@@ -157,7 +157,11 @@ public:
     X(5, Game::recovery_id) \
     X(6, Game::seen_changelog) \
     X(7, Game::auto_delete) \
-    X(8, Game::gamemode)
+    X(8, Game::gamemode) \
+    X(9, Game::auto_delete_petals) \
+    X(10, Game::tracked_mobs) \
+    X(11, Game::hold_attack) \
+    X(12, Game::hold_defense)
 
 #define X(ct, name) static auto checker_##ct = MutationObserver(name);
 STORED
@@ -193,6 +197,26 @@ void Storage::retrieve() {
             Input::movement_helper = BitMath::at(opts, 0);
             Input::keyboard_movement = BitMath::at(opts, 1);
             Game::auto_delete = BitMath::at(opts, 2);
+            Game::hold_attack = BitMath::at(opts, 3);
+            Game::hold_defense = BitMath::at(opts, 4);
+        }
+    }
+    {
+        uint32_t len = StorageProtocol::retrieve("autodelete", 256);
+        Decoder reader(&StorageProtocol::buffer[0]);
+        while (reader.at < StorageProtocol::buffer + len) {
+            PetalID::T petal_id = reader.read<uint8_t>();
+            if (petal_id >= PetalID::kNumPetals || petal_id <= PetalID::kBasic) break;
+            Game::auto_delete_petals[petal_id] = 1;
+        }
+    }
+    {
+        uint32_t len = StorageProtocol::retrieve("trackedmobs", 256);
+        Decoder reader(&StorageProtocol::buffer[0]);
+        while (reader.at < StorageProtocol::buffer + len) {
+            MobID::T mob_id = reader.read<uint8_t>();
+            if (mob_id >= MobID::kNumMobs) break;
+            Game::tracked_mobs[mob_id] = 1;
         }
     }
     {
@@ -254,6 +278,18 @@ void Storage::set() {
     }
     {
         Encoder writer(&StorageProtocol::buffer[0]);
+        for (PetalID::T id = PetalID::kBasic + 1; id < PetalID::kNumPetals; ++id)
+            if (Game::auto_delete_petals[id]) writer.write<uint8_t>(id);
+        StorageProtocol::store("autodelete", writer.at - writer.base);
+    }
+    {
+        Encoder writer(&StorageProtocol::buffer[0]);
+        for (MobID::T id = 0; id < MobID::kNumMobs; ++id)
+            if (Game::tracked_mobs[id]) writer.write<uint8_t>(id);
+        StorageProtocol::store("trackedmobs", writer.at - writer.base);
+    }
+    {
+        Encoder writer(&StorageProtocol::buffer[0]);
         for (MobID::T id = 0; id < MobID::kNumMobs; ++id)
             if (Game::seen_mobs[id]) writer.write<uint8_t>(id);
         StorageProtocol::store("mobs", writer.at - writer.base);
@@ -269,6 +305,8 @@ void Storage::set() {
         if (Input::movement_helper) BitMath::set(opts, 0);
         if (Input::keyboard_movement) BitMath::set(opts, 1);
         if (Game::auto_delete) BitMath::set(opts, 2);
+        if (Game::hold_attack) BitMath::set(opts, 3);
+        if (Game::hold_defense) BitMath::set(opts, 4);
         writer.write<uint8_t>(opts);
         StorageProtocol::store("settings", writer.at - writer.base);
     }

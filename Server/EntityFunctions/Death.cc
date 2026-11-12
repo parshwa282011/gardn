@@ -109,7 +109,7 @@ void entity_on_death(Simulation *sim, Entity const &ent) {
             ent.get_petal_id() == PetalID::kTriweb ||
             ent.get_petal_id() == PetalID::kLargeWeb)
             alloc_web(sim, PETAL_DATA[ent.get_petal_id()].attributes.radius, ent);
-        else if (ent.get_petal_id() == PetalID::kSponge) {
+        else if (PETAL_DATA[ent.get_petal_id()].attributes.period > 0) {
             Entity &parent = sim->get_ent(ent.get_parent());
             if (get_sponge_period(sim, parent) == 0) {
                 float dmg = 0;

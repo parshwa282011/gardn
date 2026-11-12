@@ -11,6 +11,12 @@
 
 typedef CircularArray<PetalID::T, MAX_SLOT_COUNT> deleted_petals_t;
 typedef CircularArray<float, MAX_SPONGE_PERIOD> delayed_damage_t;
+// one bit per petal id: the petals the player wants deleted as soon as they touch them
+inline uint32_t const AUTO_DELETE_MASK_BYTES = div_round_up(PetalID::kNumPetals, 8);
+typedef std::array<uint8_t, AUTO_DELETE_MASK_BYTES> auto_delete_mask_t;
+// one bit per mob id: the mobs an observer shows on the minimap
+inline uint32_t const TRACKED_MOB_MASK_BYTES = div_round_up(MobID::kNumMobs, 8);
+typedef std::array<uint8_t, TRACKED_MOB_MASK_BYTES> tracked_mob_mask_t;
 
 SERVER_ONLY(class Writer;)
 CLIENT_ONLY(class Reader;)

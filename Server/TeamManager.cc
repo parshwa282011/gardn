@@ -34,6 +34,8 @@ void TeamManager::tick() {
     simulation->for_each_entity([](Simulation *sim, Entity &ent){
         if (!ent.has_component(kDot)) return;
         if (ent.get_color() == ColorID::kGreen) return;
+        // (the dots of an observer belong to its camera, not to a team)
+        if (ent.get_tracked_mob() != 0) return;
         if (sim->ent_alive(ent.get_parent())) {
             Entity &player = sim->get_ent(ent.get_parent());
             ent.set_x(player.get_x());

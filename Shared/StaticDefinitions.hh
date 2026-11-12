@@ -24,7 +24,9 @@ inline uint32_t const MAX_DROPS_PER_MOB = 6;
 inline uint32_t const CHAT_SIZE = 5;
 inline uint32_t const FIRE_ANT_COUNT = 20;
 inline uint32_t const MAX_LIGHTNING_BOUNCES = 15;
-inline uint32_t const MAX_SPONGE_PERIOD = 10 * TPS;
+// the most mobs an observer shows on the minimap at once
+inline uint32_t const MAX_TRACKED_MOBS = 100;
+inline uint32_t const MAX_SPONGE_PERIOD = 20 * TPS;
 
 inline uint32_t const MAX_NAME_LENGTH = 16;
 inline uint32_t const MAX_CHAT_LENGTH = 64;
@@ -145,6 +147,8 @@ namespace PetalID {
         kMagnet,
         kButterfly,
         kMythicIris,
+        kMythicSponge,
+        kFastest,
         kNumPetals
     };
 };
@@ -324,6 +328,7 @@ struct PetalAttributes {
     uint8_t spawn_count = 0;
     uint8_t equipment = EquipmentFlags::kNone;
     uint8_t bounces = 0;
+    uint8_t no_collision = 0;
 };
 
 struct PetalData {

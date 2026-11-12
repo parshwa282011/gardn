@@ -67,6 +67,7 @@ void Simulation::on_tick() {
     for_each<kHealth>(tick_health_behavior);
     spatial_hash.collide(on_collide);
     tick_curse_behavior(this);
+    tick_tracking_behavior(this);
     for_each<kDrop>(tick_drop_behavior);
     for_each<kPhysics>(tick_entity_motion);
     for_each<kSegmented>(tick_segment_behavior);

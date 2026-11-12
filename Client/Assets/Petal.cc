@@ -162,9 +162,15 @@ void draw_static_petal_single(PetalID::T id, Renderer &ctx, PetalRenderAttribute
             ctx.set_fill(0x59ffffff);
             ctx.fill();
             break;
+        case PetalID::kFastest:
         case PetalID::kFaster:
-            ctx.set_fill(0xfffeffc9);
-            ctx.set_stroke(0xffcecfa3);
+            if (id == PetalID::kFastest) {
+                ctx.set_fill(0xffffe36e);
+                ctx.set_stroke(0xffd0b84f);
+            } else {
+                ctx.set_fill(0xfffeffc9);
+                ctx.set_stroke(0xffcecfa3);
+            }
             ctx.set_line_width(3);
             ctx.begin_path();
             ctx.arc(0,0,r);
@@ -1102,9 +1108,15 @@ void draw_static_petal_single(PetalID::T id, Renderer &ctx, PetalRenderAttribute
             ctx.qcurve_to(0, -8, -8, -5);
             ctx.stroke();
             break;
+        case PetalID::kMythicSponge:
         case PetalID::kSponge:
-            ctx.set_fill(0xffefc99a);
-            ctx.set_stroke(0xffc2a37d);
+            if (id == PetalID::kMythicSponge) {
+                ctx.set_fill(0xff8fd9d4);
+                ctx.set_stroke(0xff6fb0ab);
+            } else {
+                ctx.set_fill(0xffefc99a);
+                ctx.set_stroke(0xffc2a37d);
+            }
             ctx.set_line_width(3);
             ctx.begin_path();
             for (uint32_t i = 0; i < 7; ++i) {

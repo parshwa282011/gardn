@@ -61,6 +61,19 @@ void Game::send_inputs() {
     uint8_t settings = 0;
     if (Game::auto_delete) BitMath::set(settings, SettingFlags::kAutoDelete);
     writer.write<uint8_t>(settings);
+    writer.write<uint8_t>((uint8_t) (fclamp(Game::zoom, 0, 1) * 255 + 0.5f));
+    for (uint32_t i = 0; i < AUTO_DELETE_MASK_BYTES; ++i) {
+        uint8_t byte = 0;
+        for (uint32_t bit = 0; bit < 8 && i * 8 + bit < PetalID::kNumPetals; ++bit)
+            if (Game::auto_delete_petals[i * 8 + bit]) BitMath::set(byte, bit);
+        writer.write<uint8_t>(byte);
+    }
+    for (uint32_t i = 0; i < TRACKED_MOB_MASK_BYTES; ++i) {
+        uint8_t byte = 0;
+        for (uint32_t bit = 0; bit < 8 && i * 8 + bit < MobID::kNumMobs; ++bit)
+            if (Game::tracked_mobs[i * 8 + bit]) BitMath::set(byte, bit);
+        writer.write<uint8_t>(byte);
+    }
     socket.send(writer.packet, writer.at - writer.packet);
 }
 

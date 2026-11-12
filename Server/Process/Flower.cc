@@ -136,7 +136,10 @@ void tick_player_behavior(Simulation *sim, Entity &player) {
 
     if (sim->ent_alive(player.get_parent())) {
         Entity &camera = sim->get_ent(player.get_parent());
-        camera.set_fov(BASE_FOV * buffs.vision_factor);
+        // the player scrolls between the normal view (zoom 0) and the full view of the
+        // antennae / observer (zoom 255)
+        float zoom = player.zoom / 255.0f;
+        camera.set_fov(BASE_FOV * (1 + (buffs.vision_factor - 1) * zoom));
     }
 
     DEBUG_ONLY(assert(player.get_loadout_count() <= MAX_SLOT_COUNT);)
@@ -193,7 +196,10 @@ void tick_player_behavior(Simulation *sim, Entity &player) {
                             range += wave * 120;
                         }
                     }
-                    else if (BitMath::at(player.input, InputFlags::kDefending)) 
+                    // attacking and defending together: the petals that attack go out, the
+                    // ones that only defend stay in close
+                    if (BitMath::at(player.input, InputFlags::kDefending) &&
+                        (!BitMath::at(player.input, InputFlags::kAttacking) || petal_data.attributes.defend_only))
                         range = player.get_radius() + 15;
                     wanting *= range;
                     if (petal_data.attributes.clump_radius > 0) {

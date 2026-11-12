@@ -1,5 +1,6 @@
 #include <Client/Ui/TitleScreen/TitleScreen.hh>
 
+#include <Client/Ui/Button.hh>
 #include <Client/Ui/InGame/GameInfo.hh>
 #include <Client/Ui/ScrollContainer.hh>
 #include <Client/Ui/StaticText.hh>
@@ -23,10 +24,29 @@ void GalleryPetal::on_render(Renderer &ctx) {
     } else {
         ctx.scale(width / 60);
         draw_loadout_background(ctx, id);
+        if (Game::auto_delete_petals[id]) {
+            // a red cross: this petal is deleted as soon as it is touched
+            ctx.set_fill(0x60d32f2f);
+            ctx.begin_path();
+            ctx.round_rect(-30, -30, 60, 60, 3);
+            ctx.fill();
+            ctx.set_stroke(0xffd32f2f);
+            ctx.set_line_width(6);
+            ctx.round_line_cap();
+            ctx.begin_path();
+            ctx.move_to(-16, -16);
+            ctx.line_to(16, 16);
+            ctx.move_to(16, -16);
+            ctx.line_to(-16, 16);
+            ctx.stroke();
+        }
     }
 }
 
 void GalleryPetal::on_event(uint8_t event) {
+    // the Basic petal is the one everybody starts with: it cannot be marked
+    if (event == kClick && Game::auto_delete_select && id > PetalID::kBasic && Game::seen_petals[id])
+        Game::auto_delete_petals[id] ^= 1;
     if (event != kFocusLost && id != PetalID::kNone && Game::seen_petals[id]) {
         rendering_tooltip = 1;
         tooltip = Ui::UiLoadout::petal_tooltips[id];
@@ -82,6 +102,10 @@ static Element *make_scroll() {
 Element *Ui::make_petal_gallery() {
     Element *elt = new Ui::VContainer({
         new Ui::StaticText(25, "Petal Gallery"),
+        new Ui::HContainer({
+            new Ui::ToggleButton(24, &Game::auto_delete_select),
+            new Ui::StaticText(14, "Select petals to auto-delete (click them)")
+        }, 0, 10, { .h_justify = Style::Left }),
         make_scroll()
     }, 15, 10, { 
         .fill = 0xff5a9fdb,
