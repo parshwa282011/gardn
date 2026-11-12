@@ -12,6 +12,28 @@ void draw_static_petal_single(PetalID::T id, Renderer &ctx, PetalRenderAttribute
     switch(id) {
         case PetalID::kNone:
             break;
+        case PetalID::kMobClover:
+        case PetalID::kDropClover:
+        case PetalID::kMythicClover: {
+            // three leaves for the mob clover, four for the drop clover, five for the mythic one
+            uint32_t leaves = id == PetalID::kMobClover ? 3 : id == PetalID::kDropClover ? 4 : 5;
+            if (id == PetalID::kMythicClover) {
+                ctx.set_fill(0xff5fe07a);
+                ctx.set_stroke(0xff39a851);
+            } else {
+                ctx.set_fill(0xff3fb34f);
+                ctx.set_stroke(0xff2a8338);
+            }
+            ctx.set_line_width(2.5);
+            for (uint32_t i = 0; i < leaves; ++i) {
+                float angle = 2 * M_PI * i / leaves - M_PI / 2;
+                ctx.begin_path();
+                ctx.arc(cosf(angle) * r * 0.5, sinf(angle) * r * 0.5, r * 0.55);
+                ctx.fill();
+                ctx.stroke();
+            }
+            break;
+        }
         case PetalID::kLegendaryDandelion:
         case PetalID::kDandelion:
             ctx.set_stroke(0xff222222);

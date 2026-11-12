@@ -123,6 +123,18 @@ static Ui::Element *make_petal_stat_container(PetalID::T id) {
             new Ui::StaticText(12, format_number(attrs.spawn_count) + "x " + (MOB_DATA[attrs.spawns].name))
         }, 0, 0, { .h_justify = Style::Left }));
     }
+    if (attrs.mob_luck > 0) {
+        stats.push_back(new Ui::HContainer({
+            new Ui::StaticText(12, "Mob Luck: ", { .fill = 0xff7de86c }),
+            new Ui::StaticText(12, "+" + format_number(attrs.mob_luck))
+        }, 0, 0, { .h_justify = Style::Left }));
+    }
+    if (attrs.drop_luck > 0) {
+        stats.push_back(new Ui::HContainer({
+            new Ui::StaticText(12, "Drop Luck: ", { .fill = 0xff7de86c }),
+            new Ui::StaticText(12, "+" + format_number(attrs.drop_luck))
+        }, 0, 0, { .h_justify = Style::Left }));
+    }
     if (attrs.vision_factor < 1) {
         stats.push_back(new Ui::HContainer({
             new Ui::StaticText(12, "Extra Vision: ", { .fill = 0xffcde23b }),

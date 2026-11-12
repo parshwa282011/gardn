@@ -88,8 +88,10 @@ void entity_on_death(Simulation *sim, Entity const &ent) {
             struct MobData const &mob_data = MOB_DATA[ent.get_mob_id()];
             std::vector<PetalID::T> success_drops = {};
             StaticArray<float, MAX_DROPS_PER_MOB> const &drop_chances = MOB_DROP_CHANCES[ent.get_mob_id()];
+            // the drop luck of the biome it dies in
+            float drop_mult = Map::drop_multiplier(Map::drop_luck_at(sim, ent.get_x(), ent.get_y()));
             for (uint32_t i = 0; i < mob_data.drops.size(); ++i) 
-                if (frand() < drop_chances[i]) success_drops.push_back(mob_data.drops[i]);
+                if (frand() < fclamp(drop_chances[i] * drop_mult, 0, 1)) success_drops.push_back(mob_data.drops[i]);
             _alloc_drops(sim, success_drops, ent.get_x(), ent.get_y());
         }
         if (MOB_DATA[ent.get_mob_id()].attributes.hole && 

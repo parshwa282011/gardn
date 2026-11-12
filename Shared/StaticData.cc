@@ -1007,6 +1007,50 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
             .rotation_style = PetalAttributes::kFollowRot
         }
     },
+    {
+        .name = "Mob Clover",
+        .description = "Brings luck to the biome you are in: rarer mobs spawn more often",
+        .health = 10.0,
+        .damage = 1.0,
+        .radius = 10.0,
+        .reload = 2.5,
+        .count = 1,
+        .rarity = RarityID::kLegendary,
+        .attributes = {
+            .defend_only = 1,
+            .mob_luck = 2
+        }
+    },
+    {
+        .name = "Drop Clover",
+        .description = "Brings luck to the biome you are in: mobs drop their petals very slightly more often",
+        .health = 10.0,
+        .damage = 1.0,
+        .radius = 10.0,
+        .reload = 2.5,
+        .count = 1,
+        .rarity = RarityID::kLegendary,
+        .attributes = {
+            .defend_only = 1,
+            .drop_luck = 2
+        }
+    },
+    {
+        .name = "Mythic Clover",
+        .description = "Brings both kinds of luck to the biome you are in",
+        .health = 10.0,
+        .damage = 1.0,
+        .radius = 10.0,
+        .reload = 2.5,
+        .count = 1,
+        .rarity = RarityID::kMythic,
+        .attributes = {
+            .defend_only = 1,
+            // 0.75 times what the Mob Clover and the Drop Clover give together: 0.75 * (2 + 2) = 3, 1.5 of each
+            .mob_luck = 1.5,
+            .drop_luck = 1.5
+        }
+    },
 }};
 
 std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{

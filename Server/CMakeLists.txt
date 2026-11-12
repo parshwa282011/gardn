@@ -19,6 +19,7 @@ set(SOURCES
     Process/Drop.cc
     Process/Flower.cc
     Process/FlowerAi.cc
+    Process/Luck.cc
     Process/Health.cc
     Process/Motion.cc
     Process/Petal.cc

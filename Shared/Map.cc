@@ -48,6 +48,42 @@ void Map::remove_mob(Simulation *sim, uint32_t zone) {
     --sim->zone_mob_counts[zone];
 }
 
+// Every mob can spawn in the PvP area of the sandbox. A mob that the map spawns keeps the
+// chance it has there (added up over the zones); the ones the map never spawns by
+// themselves (the worker, soldier and queen ants, the digger) are as rare as the rarest.
+static StaticArray<SpawnChance, MobID::kNumMobs> const &_sandbox_spawns() {
+    static StaticArray<SpawnChance, MobID::kNumMobs> const spawns = [](){
+        float weight[MobID::kNumMobs] = {0};
+        for (struct ZoneDefinition const &zone : MAP_DATA)
+            for (SpawnChance const &s : zone.spawns)
+                weight[s.id] += s.chance;
+        float rarest = 0;
+        for (MobID::T id = 0; id < MobID::kNumMobs; ++id)
+            if (weight[id] > 0 && (rarest == 0 || weight[id] < rarest)) rarest = weight[id];
+        StaticArray<SpawnChance, MobID::kNumMobs> ret;
+        for (MobID::T id = 0; id < MobID::kNumMobs; ++id)
+            ret.push({ id, weight[id] > 0 ? weight[id] : rarest });
+        return ret;
+    }();
+    return spawns;
+}
+
+float Map::mob_luck_at(Simulation *sim, float x, float y) {
+    return sim->zone_mob_luck[get_zone_from_pos(x, y)] / MAX_ZONE_LUCK;
+}
+
+float Map::drop_luck_at(Simulation *sim, float x, float y) {
+    return sim->zone_drop_luck[get_zone_from_pos(x, y)] / MAX_ZONE_LUCK;
+}
+
+float Map::spawn_weight(uint8_t rarity, float luck) {
+    return 1 + LUCK_SPAWN_BOOST[rarity] * luck;
+}
+
+float Map::drop_multiplier(float luck) {
+    return 1 + LUCK_DROP_BONUS * luck;
+}
+
 void Map::spawn_random_mob(Simulation *sim, float x, float y) {
     uint32_t zone_id = Map::get_zone_from_pos(x, y);
     struct ZoneDefinition const &zone = MAP_DATA[zone_id];
@@ -59,13 +95,17 @@ void Map::spawn_random_mob(Simulation *sim, float x, float y) {
         area = (SANDBOX_WIDTH - SANDBOX_PVP_LEFT) * SANDBOX_HEIGHT;
     }
     if (density * area / (500 * 500) < sim->zone_mob_counts[zone_id]) return;
-    auto spawns = zone.spawns.size() > 0 ? zone.spawns : MAP_DATA[Map::get_random_zone_with_spawns()].spawns;
+    auto spawns = sim->arena_info.gamemode == Gamemode::kSandbox ? _sandbox_spawns() :
+        zone.spawns.size() > 0 ? zone.spawns : MAP_DATA[Map::get_random_zone_with_spawns()].spawns;
+    // the luck of the biome makes the rarer mobs more likely (the mob count is the same)
+    float luck = sim->zone_mob_luck[zone_id] / MAX_ZONE_LUCK;
+    auto weight = [&](SpawnChance const &s) { return s.chance * spawn_weight(MOB_DATA[s.id].rarity, luck); };
     float sum = 0;
     for (SpawnChance const &s : spawns)
-        sum += s.chance;
+        sum += weight(s);
     sum *= frand();
     for (SpawnChance const &s : spawns) {
-        sum -= s.chance;
+        sum -= weight(s);
         if (sum <= 0) {
             Entity &ent = alloc_mob(sim, s.id, x, y, NULL_ENTITY, [&](Entity &mob){
                 mob.zone = zone_id;

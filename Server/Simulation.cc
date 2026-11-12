@@ -40,6 +40,8 @@ static void calculate_leaderboard(Simulation *sim) {
 
 void Simulation::on_tick() {
     spatial_hash.refresh(ARENA_WIDTH, ARENA_HEIGHT);
+    // (before the spawns, which use it)
+    tick_luck_behavior(this);
     if (arena_info.gamemode == Gamemode::kSandbox) {
         // mobs spawn by themselves only in the PvP area (the right half)
         if (frand() < 1.0f / TPS)
