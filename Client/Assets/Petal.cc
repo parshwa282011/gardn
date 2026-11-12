@@ -12,23 +12,32 @@ void draw_static_petal_single(PetalID::T id, Renderer &ctx, PetalRenderAttribute
     switch(id) {
         case PetalID::kNone:
             break;
-        case PetalID::kMobClover:
-        case PetalID::kDropClover:
-        case PetalID::kMythicClover: {
-            // three leaves for the mob clover, four for the drop clover, five for the mythic one
-            uint32_t leaves = id == PetalID::kMobClover ? 3 : id == PetalID::kDropClover ? 4 : 5;
-            if (id == PetalID::kMythicClover) {
-                ctx.set_fill(0xff5fe07a);
-                ctx.set_stroke(0xff39a851);
-            } else {
-                ctx.set_fill(0xff3fb34f);
-                ctx.set_stroke(0xff2a8338);
-            }
+        case PetalID::kClover: {
+            // four heart shaped leaves that meet in the middle, and a short stem
+            ctx.set_stroke(0xff2a8338);
             ctx.set_line_width(2.5);
-            for (uint32_t i = 0; i < leaves; ++i) {
-                float angle = 2 * M_PI * i / leaves - M_PI / 2;
+            ctx.round_line_cap();
+            ctx.begin_path();
+            ctx.move_to(0, 0);
+            ctx.qcurve_to(r * 0.1, r * 0.75, r * 0.45, r * 1.2);
+            ctx.stroke();
+            ctx.set_fill(0xff3fb34f);
+            ctx.round_line_join();
+            for (uint32_t i = 0; i < 4; ++i) {
+                RenderContext leaf(&ctx);
+                ctx.rotate(M_PI / 4 + i * M_PI / 2);
                 ctx.begin_path();
-                ctx.arc(cosf(angle) * r * 0.5, sinf(angle) * r * 0.5, r * 0.55);
+                // a heart: its tip is in the middle of the clover, its two lobes point outwards
+                for (uint32_t j = 0; j < 28; ++j) {
+                    float t = 2 * M_PI * j / 28;
+                    float hx = 16 * powf(sinf(t), 3);
+                    float hy = 13 * cosf(t) - 5 * cosf(2 * t) - 2 * cosf(3 * t) - cosf(4 * t);
+                    float x = (hy + 17) / 29 * r * 1.05;
+                    float y = hx / 16 * r * 0.52;
+                    if (j == 0) ctx.move_to(x, y);
+                    else ctx.line_to(x, y);
+                }
+                ctx.close_path();
                 ctx.fill();
                 ctx.stroke();
             }

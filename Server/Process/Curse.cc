@@ -20,10 +20,8 @@ void tick_curse_behavior(Simulation *sim) {
     }
     EntityID leader = NULL_ENTITY;
     uint32_t max_score = level_to_score(60);
-    // (there is no curse in the sandbox, where the level is whatever the dev menu set)
-    bool sandbox = sim->arena_info.gamemode == Gamemode::kSandbox;
     sim->for_each<kCamera>([&](Simulation *sim, Entity &ent) {
-        if (sandbox || !sim->ent_alive(ent.get_player())) return;
+        if (!sim->ent_alive(ent.get_player())) return;
         // a flower that has just spawned or been restored is not the leader yet: the mobs
         // do not go for it and it takes no damage until the time is up
         if (sim->get_ent(ent.get_player()).curse_free_ticks > 0) return;

@@ -68,16 +68,8 @@ static StaticArray<SpawnChance, MobID::kNumMobs> const &_sandbox_spawns() {
     return spawns;
 }
 
-float Map::mob_luck_at(Simulation *sim, float x, float y) {
-    return sim->zone_mob_luck[get_zone_from_pos(x, y)] / MAX_ZONE_LUCK;
-}
-
 float Map::drop_luck_at(Simulation *sim, float x, float y) {
     return sim->zone_drop_luck[get_zone_from_pos(x, y)] / MAX_ZONE_LUCK;
-}
-
-float Map::spawn_weight(uint8_t rarity, float luck) {
-    return 1 + LUCK_SPAWN_BOOST[rarity] * luck;
 }
 
 float Map::drop_multiplier(float luck) {
@@ -97,15 +89,12 @@ void Map::spawn_random_mob(Simulation *sim, float x, float y) {
     if (density * area / (500 * 500) < sim->zone_mob_counts[zone_id]) return;
     auto spawns = sim->arena_info.gamemode == Gamemode::kSandbox ? _sandbox_spawns() :
         zone.spawns.size() > 0 ? zone.spawns : MAP_DATA[Map::get_random_zone_with_spawns()].spawns;
-    // the luck of the biome makes the rarer mobs more likely (the mob count is the same)
-    float luck = sim->zone_mob_luck[zone_id] / MAX_ZONE_LUCK;
-    auto weight = [&](SpawnChance const &s) { return s.chance * spawn_weight(MOB_DATA[s.id].rarity, luck); };
     float sum = 0;
     for (SpawnChance const &s : spawns)
-        sum += weight(s);
+        sum += s.chance;
     sum *= frand();
     for (SpawnChance const &s : spawns) {
-        sum -= weight(s);
+        sum -= s.chance;
         if (sum <= 0) {
             Entity &ent = alloc_mob(sim, s.id, x, y, NULL_ENTITY, [&](Entity &mob){
                 mob.zone = zone_id;

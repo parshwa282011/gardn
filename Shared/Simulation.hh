@@ -20,7 +20,6 @@ class Simulation {
 public:
     SERVER_ONLY(std::array<uint32_t, MAP_DATA.size()> zone_mob_counts;)
     // what the clovers of the players in each zone add up to (0 to MAX_ZONE_LUCK)
-    SERVER_ONLY(std::array<float, MAP_DATA.size()> zone_mob_luck;)
     SERVER_ONLY(std::array<float, MAP_DATA.size()> zone_drop_luck;)
     SERVER_ONLY(SpatialHash spatial_hash;)
     Arena arena_info;

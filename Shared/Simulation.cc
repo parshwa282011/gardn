@@ -24,7 +24,6 @@ void Simulation::reset() {
     #ifdef SERVERSIDE
     spatial_hash.refresh(ARENA_WIDTH, ARENA_HEIGHT);
     zone_mob_counts = {0};
-    zone_mob_luck = {0};
     zone_drop_luck = {0};
     #endif
 }

@@ -150,9 +150,7 @@ namespace PetalID {
         kMythicSponge,
         kFastest,
         kLegendaryDandelion,
-        kMobClover,
-        kDropClover,
-        kMythicClover,
+        kClover,
         kNumPetals
     };
 };
@@ -203,17 +201,13 @@ namespace RarityID {
     };
 };
 
-// Luck: the clovers of the players in a biome (a zone of the map) add up to its luck. It
-// does not build up over time: it is the same for as long as the same clovers are there,
-// and it changes the moment one is added or taken off.
-// A biome's mob luck and drop luck each stop adding up at MAX_ZONE_LUCK points
-inline float const MAX_ZONE_LUCK = 20;
-// how much more likely a mob of each rarity is to spawn at full luck (the chances of the
-// common and unusual mobs are the same, so this is what the rarer ones gain: a point of
-// luck is a twentieth of this), by rarity: common, unusual, rare, epic, legendary, mythic, unique
-inline float const LUCK_SPAWN_BOOST[RarityID::kNumRarities] = {0, 0, 2, 4, 5, 6, 0};
-// how much more likely every drop is at full luck (a point of luck is a twentieth of this)
-inline float const LUCK_DROP_BONUS = 0.1;
+// Drop luck: the clovers of the players in a biome (a zone of the map) add up to its drop
+// luck. It does not build up over time: it is the same for as long as the same clovers are
+// there, and it changes the moment one is added or taken off.
+// A biome's drop luck stops adding up at MAX_ZONE_LUCK points
+inline float const MAX_ZONE_LUCK = 24;
+// how much more likely every drop is at full luck (a point of luck is a twentyfourth of this)
+inline float const LUCK_DROP_BONUS = 0.6;
 
 namespace ColorID {
     enum {
@@ -345,8 +339,7 @@ struct PetalAttributes {
     uint8_t equipment = EquipmentFlags::kNone;
     uint8_t bounces = 0;
     uint8_t no_collision = 0;
-    // the luck the petal adds to the biome of its flower (see MAX_ZONE_LUCK)
-    float mob_luck = 0;
+    // the drop luck the petal adds to the biome of its flower (see MAX_ZONE_LUCK)
     float drop_luck = 0;
 };
 

@@ -20,12 +20,9 @@ namespace Map {
     #ifdef SERVERSIDE
     extern void remove_mob(Simulation *, uint32_t);
     extern void spawn_random_mob(Simulation *, float, float);
-    // the luck of the biome at a position, from 0 to 1
-    extern float mob_luck_at(Simulation *, float, float);
+    // the drop luck of the biome at a position, from 0 to 1
     extern float drop_luck_at(Simulation *, float, float);
-    // what a luck (0 to 1) does: the weight of a mob of a rarity in the spawns, and the
-    // factor on the chance of a drop
-    extern float spawn_weight(uint8_t, float);
+    // the factor on the chance of a drop at a luck (0 to 1)
     extern float drop_multiplier(float);
     /* finds a spawn location at least <d> units from a player,
     and places it in the Vector &. returns whether or not a

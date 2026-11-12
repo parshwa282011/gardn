@@ -950,8 +950,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     {
         .name = "Iris",
         .description = "Its poison lingers for a very long time",
-        .health = 
-        5.0,
+        .health = 5.0,
         .damage = 5.0,
         .radius = 7.0,
         .reload = 5.0,
@@ -967,14 +966,14 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     {
         .name = "Sponge",
         .description = "Soaks up unlimited damage and slowly releases it over time. Cannot be broken, only removed",
-        .health = 1000000.0,
+        .health = 0.0,
         .damage = 0.0,
         .radius = 12.0,
         .reload = 2.5,
         .count = 1,
         .rarity = RarityID::kMythic,
         .attributes = {
-            .period = 20.0,
+            .period = 60.0,
             .defend_only = 1,
             .no_collision = 1
         }
@@ -982,8 +981,8 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     {
         .name = "Fastest",
         .description = "A big Faster petal: your other petals spin much faster",
-        .health = 8.0,
-        .damage = 10.0,
+        .health = 5.0,
+        .damage = 14.0,
         .radius = 12.0,
         .reload = 0.5,
         .count = 1,
@@ -995,12 +994,12 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     {
         .name = "Dandelion",
         .description = "Prevents healing on whatever it hits, and you can shoot it at your enemies",
-        .health = 5.0,
-        .damage = 25.0,
+        .health = 10.0,
+        .damage = 10.0,
         .radius = 10.0,
         .reload = 1.0,
         .count = 1,
-        .rarity = RarityID::kLegendary,
+        .rarity = RarityID::kEpic,
         .attributes = {
             .secondary_reload = 0.5,
             .defend_only = 1,
@@ -1009,21 +1008,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
         }
     },
     {
-        .name = "Mob Clover",
-        .description = "Brings luck to the biome you are in: rarer mobs spawn more often",
-        .health = 10.0,
-        .damage = 1.0,
-        .radius = 10.0,
-        .reload = 2.5,
-        .count = 1,
-        .rarity = RarityID::kLegendary,
-        .attributes = {
-            .defend_only = 1,
-            .mob_luck = 2
-        }
-    },
-    {
-        .name = "Drop Clover",
+        .name = "Clover",
         .description = "Brings luck to the biome you are in: mobs drop their petals very slightly more often",
         .health = 10.0,
         .damage = 1.0,
@@ -1034,22 +1019,6 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
         .attributes = {
             .defend_only = 1,
             .drop_luck = 2
-        }
-    },
-    {
-        .name = "Mythic Clover",
-        .description = "Brings both kinds of luck to the biome you are in",
-        .health = 10.0,
-        .damage = 1.0,
-        .radius = 10.0,
-        .reload = 2.5,
-        .count = 1,
-        .rarity = RarityID::kMythic,
-        .attributes = {
-            .defend_only = 1,
-            // 0.75 times what the Mob Clover and the Drop Clover give together: 0.75 * (2 + 2) = 3, 1.5 of each
-            .mob_luck = 1.5,
-            .drop_luck = 1.5
         }
     },
 }};
