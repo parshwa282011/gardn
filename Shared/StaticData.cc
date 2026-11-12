@@ -981,7 +981,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     },
     {
         .name = "Fastest",
-        .description = "A big golden Faster petal: your other petals spin much faster",
+        .description = "A big Faster petal: your other petals spin much faster",
         .health = 8.0,
         .damage = 10.0,
         .radius = 12.0,

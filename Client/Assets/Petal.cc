@@ -187,13 +187,8 @@ void draw_static_petal_single(PetalID::T id, Renderer &ctx, PetalRenderAttribute
             break;
         case PetalID::kFastest:
         case PetalID::kFaster:
-            if (id == PetalID::kFastest) {
-                ctx.set_fill(0xffffe36e);
-                ctx.set_stroke(0xffd0b84f);
-            } else {
-                ctx.set_fill(0xfffeffc9);
-                ctx.set_stroke(0xffcecfa3);
-            }
+            ctx.set_fill(0xfffeffc9);
+            ctx.set_stroke(0xffcecfa3);
             ctx.set_line_width(3);
             ctx.begin_path();
             ctx.arc(0,0,r);
