@@ -973,7 +973,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
         .count = 1,
         .rarity = RarityID::kMythic,
         .attributes = {
-            .period = 60.0,
+            .period = 20.0,
             .defend_only = 1,
             .no_collision = 1
         }

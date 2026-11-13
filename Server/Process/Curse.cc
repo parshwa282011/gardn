@@ -55,7 +55,8 @@ void tick_curse_behavior(Simulation *sim) {
         }
         if (max_score >= level_to_score(90)) {
             float accel = player.acceleration.magnitude() / PLAYER_ACCELERATION;
-            float dmg = (player.health < hp_at_level(score_to_level(player.get_score())) ? player.health : hp_at_level(score_to_level(player.get_score()))) / (30 * TPS) * fclamp(accel, 0, 1);
+            float dmg = (hp_at_level(score_to_level(player.get_score())) - (player.max_health - player.health)) / (30 * TPS) * fclamp(accel, 0, 1);
+            if(dmg < 0f) dmg = 0f;
             inflict_damage(sim, NULL_ENTITY, player.id, dmg, DamageType::kPassive);
         }
     }
