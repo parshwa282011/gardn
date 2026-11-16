@@ -965,7 +965,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     },
     {
         .name = "Sponge",
-        .description = "Soaks up unlimited damage and slowly releases it over time. Cannot be broken, only removed",
+        .description = "SOAK DAMAGE!",
         .health = 0.0,
         .damage = 0.0,
         .radius = 12.0,
@@ -980,7 +980,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     },
     {
         .name = "Fastest",
-        .description = "A big Faster petal: your other petals spin much faster",
+        .description = "Idk how fat petal speeds up roatation speed, but it does",
         .health = 5.0,
         .damage = 14.0,
         .radius = 10.0,
@@ -993,7 +993,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     },
     {
         .name = "Dandelion",
-        .description = "Prevents healing on whatever it hits, and you can shoot it at your enemies",
+        .description = "Prevents healing and is shootable.",
         .health = 10.0,
         .damage = 10.0,
         .radius = 10.0,
@@ -1009,7 +1009,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     },
     {
         .name = "Clover",
-        .description = "Brings luck to the biome you are in: mobs drop their petals very slightly more often",
+        .description = "Better drops!",
         .health = 10.0,
         .damage = 1.0,
         .radius = 10.0,
@@ -1023,7 +1023,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
     },
     {
         .name = "devStabOSC",
-        .description = "Locks on like the legendary missile. Whoever it hits gets a 10 second timer, then 1000 TNT explode on them",
+        .description = "NUKE",
         .health = 5.0,
         .damage = 25.0,
         .radius = 10.0,
