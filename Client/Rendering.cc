@@ -152,6 +152,9 @@ void Game::render_game() {
         renderer.scale(ent.animation);
         render_drop(renderer, ent);
     });
+    simulation.for_each<kFlower>([](Simulation *sim, Entity const &ent){
+        render_stab_ground(renderer, ent);
+    });
     simulation.for_each<kHealth>([](Simulation *sim, Entity const &ent){
         RenderContext context(&renderer);
         renderer.translate(ent.get_x(), ent.get_y());
@@ -187,6 +190,9 @@ void Game::render_game() {
         renderer.translate(ent.get_x(), ent.get_y());
         _apply_damage_filter(renderer, ent);
         render_flower(renderer, ent);
+    });
+    simulation.for_each<kFlower>([](Simulation *sim, Entity const &ent){
+        render_stab_effect(renderer, ent);
     });
     simulation.for_each<kAnimation>([](Simulation *sim, Entity const &ent){
         RenderContext context(&renderer);

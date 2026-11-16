@@ -17,4 +17,9 @@ namespace DOM {
     void cache_client();
     void toggle_fullscreen();
     uint8_t text_input_focused();
+    // The best scores of gardn (the master's /leaderboard, the same numbers as the leaderboard
+    // page). fetch_high_scores asks in the background; retrieve_high_scores gives what the
+    // last answer had, one line per player ("1. name - score"), empty before there is one
+    void fetch_high_scores();
+    std::string retrieve_high_scores();
 }

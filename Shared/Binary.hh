@@ -32,7 +32,11 @@ namespace DevCommandID {
         kGivePetal,       // uint8: petal id, goes to the first empty slot
         kToggleInvincible,
         kSpawnMob,        // uint8: mob id, appears near the player
-        kClearMobs
+        kClearMobs,
+        kReloadPetals,    // no argument: every petal of the loadout is ready at once
+        kSquadCreate,     // no argument: a new squad, the player is in it
+        kSquadJoin,       // string: the code of the squad
+        kSquadLeave       // no argument: back to the normal group (FFA)
     };
 }
 

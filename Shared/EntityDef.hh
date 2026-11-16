@@ -60,7 +60,9 @@ SINGLE(Camera, camera_x, Float) \
 SINGLE(Camera, camera_y, Float) \
 SINGLE(Camera, fov, Float) \
 SINGLE(Camera, recovery_id, uint64_t) \
-SINGLE(Camera, saving_progress, uint8_t)
+SINGLE(Camera, saving_progress, uint8_t) \
+SINGLE(Camera, squad_code, std::string) \
+SINGLE(Camera, squad_result, uint8_t)
 
 #define FIELDS_Relations \
 SINGLE(Relations, team, EntityID) \
@@ -76,6 +78,8 @@ SINGLE(Flower, loadout_count, uint8_t) \
 SINGLE(Flower, face_flags, uint8_t) \
 SINGLE(Flower, sponge_stored, uint32_t) \
 SINGLE(Flower, equip_flags, uint8_t) \
+SINGLE(Flower, stab_timer, uint8_t) \
+SINGLE(Flower, stab_blast, uint8_t) \
 SINGLE(Flower, leaderboard_pos, uint8_t) \
 MULTIPLE(Flower, loadout_ids, PetalID::T, 2 * MAX_SLOT_COUNT) \
 MULTIPLE(Flower, loadout_reloads, float, MAX_SLOT_COUNT)
@@ -144,6 +148,10 @@ MULTIPLE(Progress, saved_loadout, PetalID::T, 2 * MAX_SLOT_COUNT)
     SINGLE(tracked_target, EntityID, =NULL_ENTITY) \
     SINGLE(tracker_dots, std::vector<EntityID>, ={}) \
     \
+    SINGLE(stab_ticks, game_tick_t, =0) \
+    SINGLE(stab_blast_ticks, game_tick_t, =0) \
+    SINGLE(stab_tnt_fired, uint32_t, =0) \
+    SINGLE(stab_owner, EntityID, =NULL_ENTITY) \
     SINGLE(slow_ticks, game_tick_t, =0) \
     SINGLE(slow_inflict, game_tick_t, =0) \
     SINGLE(immunity_ticks, game_tick_t, =0) \

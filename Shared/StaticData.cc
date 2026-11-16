@@ -1021,6 +1021,22 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
             .drop_luck = 2
         }
     },
+    {
+        .name = "devStabOSC",
+        .description = "Locks on like the legendary missile. Whoever it hits gets a 10 second timer, then 1000 TNT explode on them",
+        .health = 5.0,
+        .damage = 25.0,
+        .radius = 10.0,
+        .reload = 1.0,
+        .count = 1,
+        .rarity = RarityID::kMythic,
+        .attributes = {
+            .secondary_reload = 0.5,
+            .defend_only = 1,
+            .icon_angle = 1,
+            .rotation_style = PetalAttributes::kFollowRot
+        }
+    },
 }};
 
 std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{

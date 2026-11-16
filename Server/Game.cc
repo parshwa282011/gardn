@@ -11,6 +11,8 @@
 #include <Shared/Entity.hh>
 #include <Shared/Map.hh>
 
+#include <cctype>
+
 static void _update_client(Simulation *sim, Client *client) {
     if (client == nullptr) return;
     if (!client->verified) return;
@@ -84,6 +86,17 @@ void GameInstance::init() {
         // mobs only in the PvP area (the right half), the normal area has none
         for (uint32_t i = 0; i < SANDBOX_MOB_CAP; ++i)
             Map::spawn_random_mob(&simulation, SANDBOX_PVP_LEFT + 200 + frand() * (SANDBOX_WIDTH - SANDBOX_PVP_LEFT - 400), 200 + frand() * (SANDBOX_HEIGHT - 400));
+        // the teams of the squads (each squad has its own color)
+        uint8_t const squad_colors[MAX_SQUADS] = { ColorID::kPurple, ColorID::kOrange };
+        for (uint32_t i = 0; i < MAX_SQUADS; ++i) {
+            Entity &team = simulation.alloc_ent();
+            team.add_component(kRelations);
+            team.set_color(squad_colors[i]);
+            team.set_team(team.id);
+            team.set_parent(team.id);
+            squads[i].team = team.id;
+            squads[i].color = squad_colors[i];
+        }
     } else
         for (uint32_t i = 0; i < ENTITY_CAP / 2; ++i)
             Map::spawn_random_mob(&simulation, frand() * ARENA_WIDTH, frand() * ARENA_HEIGHT);
@@ -95,6 +108,8 @@ void GameInstance::init() {
 
 void GameInstance::tick() {
     simulation.tick();
+    if (gamemode == Gamemode::kSandbox)
+        squad_cleanup();
     if (gamemode == Gamemode::kTDM)
         team_manager.tick();
     for (Client *client : clients)
@@ -125,6 +140,9 @@ void GameInstance::add_client(Client *client, EntityID camera_id) {
 
 void GameInstance::remove_client(Client *client) {
     DEBUG_ONLY(assert(client->game == this);)
+    // a player who goes is not in a squad any more (the squad ends with its last member)
+    if (gamemode == Gamemode::kSandbox && simulation.ent_alive(client->camera))
+        squad_leave(client);
     clients.erase(client);
     if (simulation.ent_exists(client->camera)) {
         Entity &camera = simulation.get_ent(client->camera);
@@ -228,4 +246,93 @@ void GameInstance::show_progress_saves(Client *client, std::vector<PlayerProgres
         PlayerProgress copy = progress;
         camera.progress_saves.push_back(alloc_progress(&simulation, copy, camera).id);
     }
+}
+
+
+// puts the player's camera, flower and what belongs to the flower (petals, webs) in a team
+// and color, and tells them how it went
+void GameInstance::squad_set(Client *client, EntityID team, uint8_t color, std::string const &code, uint8_t result) {
+    if (!simulation.ent_alive(client->camera)) return;
+    Entity &camera = simulation.get_ent(client->camera);
+    camera.set_team(team);
+    camera.set_color(color);
+    camera.set_squad_code(code);
+    // (a counter in the high bits: the same answer twice in a row is still a change)
+    camera.set_squad_result((uint8_t) ((((camera.get_squad_result() >> 3) + 1) << 3) | result));
+    if (!simulation.ent_alive(camera.get_player())) return;
+    Entity &player = simulation.get_ent(camera.get_player());
+    player.set_team(team);
+    player.set_color(color);
+    simulation.for_each_entity([&](Simulation *, Entity &ent) {
+        if (!ent.has_component(kRelations) || ent.pending_delete) return;
+        if (!ent.has_component(kPetal) && !ent.has_component(kWeb)) return;
+        if (ent.get_parent() != player.id) return;
+        ent.set_team(team);
+        ent.set_color(color);
+    });
+}
+
+// a squad with nobody in it is over (its code is free again)
+void GameInstance::squad_cleanup() {
+    for (Squad &squad : squads) {
+        if (squad.code.empty()) continue;
+        bool has_member = false;
+        for (Client *client : clients)
+            if (simulation.ent_alive(client->camera) && simulation.get_ent(client->camera).get_team() == squad.team)
+                has_member = true;
+        if (!has_member) squad.code.clear();
+    }
+}
+
+void GameInstance::squad_create(Client *client) {
+    if (gamemode != Gamemode::kSandbox || !simulation.ent_alive(client->camera)) return;
+    squad_cleanup();
+    Squad *free_squad = nullptr;
+    for (Squad &squad : squads) {
+        if (squad.code.empty()) {
+            free_squad = &squad;
+            break;
+        }
+    }
+    if (free_squad == nullptr) {
+        // no change: the player stays where they are
+        Entity &camera = simulation.get_ent(client->camera);
+        squad_set(client, camera.get_team(), camera.get_color(), camera.get_squad_code(), SquadResult::kSquadsFull);
+        return;
+    }
+    std::string code;
+    bool unique = false;
+    while (!unique) {
+        code.clear();
+        for (uint32_t i = 0; i < SQUAD_CODE_LENGTH; ++i)
+            code.push_back((char) ('a' + (uint32_t) (frand() * 26) % 26));
+        unique = true;
+        for (Squad const &squad : squads)
+            if (squad.code == code) unique = false;
+    }
+    free_squad->code = code;
+    // (making a squad leaves the one the player is in: the join below changes their team)
+    squad_set(client, free_squad->team, free_squad->color, code, SquadResult::kCreated);
+}
+
+void GameInstance::squad_join(Client *client, std::string const &typed) {
+    if (gamemode != Gamemode::kSandbox || !simulation.ent_alive(client->camera)) return;
+    std::string code;
+    for (char c : typed)
+        if (!std::isspace((unsigned char) c)) code.push_back((char) std::tolower((unsigned char) c));
+    Entity &camera = simulation.get_ent(client->camera);
+    for (Squad &squad : squads) {
+        if (squad.code.empty() || squad.code != code) continue;
+        squad_set(client, squad.team, squad.color, squad.code, SquadResult::kJoined);
+        return;
+    }
+    // no change: the player stays where they are
+    squad_set(client, camera.get_team(), camera.get_color(), camera.get_squad_code(), SquadResult::kNoSuchSquad);
+}
+
+void GameInstance::squad_leave(Client *client) {
+    if (gamemode != Gamemode::kSandbox || !simulation.ent_alive(client->camera)) return;
+    Entity &camera = simulation.get_ent(client->camera);
+    squad_set(client, camera.id, ColorID::kYellow, "", SquadResult::kLeft);
+    squad_cleanup();
 }

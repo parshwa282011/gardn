@@ -8,6 +8,8 @@
 #include <Shared/Simulation.hh>
 
 #include <array>
+#include <string>
+#include <vector>
 
 namespace Game {
     extern Simulation simulation;
@@ -22,6 +24,8 @@ namespace Game {
     extern std::string nickname;
     extern std::string dev_password;
     extern std::string disconnect_message;
+    // the best scores shown on the main menu, one line each (see DOM::fetch_high_scores)
+    extern std::vector<std::string> high_scores;
     // the page found a login (uuid) to show the server; saves need one
     extern uint8_t has_login;
     // a line shown for a few seconds in the game, and until when (Game::timestamp)
@@ -69,10 +73,12 @@ namespace Game {
     extern uint8_t gamemode;
     // the developer menu of the sandbox (the \ key)
     extern uint8_t show_dev_menu;
-    extern uint8_t dev_tab; // 0 petals, 1 mobs
+    extern uint8_t dev_tab; // 0 petals, 1 mobs, 2 squads
     extern std::string dev_level_text;
     extern std::string dev_score_text;
     extern std::string dev_search_text;
+    // the squad code typed in the squads tab of the dev menu
+    extern std::string dev_squad_text;
 
     extern uint8_t show_chat;
     extern std::string chat_text;
@@ -109,6 +115,10 @@ namespace Game {
     void send_dev_toggle_invincible();
     void send_dev_spawn_mob(uint8_t);
     void send_dev_clear_mobs();
+    void send_dev_reload_petals();
+    void send_dev_squad_create();
+    void send_dev_squad_join(std::string const &);
+    void send_dev_squad_leave();
     void on_message(uint8_t *, uint32_t);
     void poll_ui_event(Ui::ScreenEvent const &);
 };

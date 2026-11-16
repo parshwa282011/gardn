@@ -161,3 +161,14 @@ void Game::send_dev_give_petal(uint8_t id) { send_dev(DevCommandID::kGivePetal, 
 void Game::send_dev_toggle_invincible() { send_dev(DevCommandID::kToggleInvincible, 0, false); }
 void Game::send_dev_spawn_mob(uint8_t id) { send_dev(DevCommandID::kSpawnMob, id, true); }
 void Game::send_dev_clear_mobs() { send_dev(DevCommandID::kClearMobs, 0, false); }
+void Game::send_dev_reload_petals() { send_dev(DevCommandID::kReloadPetals, 0, false); }
+void Game::send_dev_squad_create() { send_dev(DevCommandID::kSquadCreate, 0, false); }
+void Game::send_dev_squad_leave() { send_dev(DevCommandID::kSquadLeave, 0, false); }
+void Game::send_dev_squad_join(std::string const &code) {
+    if (!Game::alive()) return;
+    Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
+    writer.write<uint8_t>(Serverbound::kDevCommand);
+    writer.write<uint8_t>(DevCommandID::kSquadJoin);
+    writer.write<std::string>(code.substr(0, SQUAD_CODE_LENGTH));
+    Game::socket.send(writer.packet, writer.at - writer.packet);
+}

@@ -55,6 +55,8 @@ namespace Ui {
         virtual void on_event(uint8_t) override;
     };
 
+    // the countdown of devStabOSC, on the screen of the player it hit
+    Element *make_stab_timer();
     Element *make_leaderboard();
     // what the colors of the observer's dots mean, shown under the leaderboard while ' is held
     Element *make_color_legend();

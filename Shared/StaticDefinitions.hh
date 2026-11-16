@@ -70,6 +70,30 @@ inline uint32_t const SANDBOX_PVP_LEFT = SANDBOX_WIDTH / 2;
 // keep density * area / (500 * 500) mobs, so 1600 here
 inline uint32_t const SANDBOX_PVP_DENSITY = 25;
 inline uint32_t const SANDBOX_MOB_CAP = SANDBOX_PVP_DENSITY * (SANDBOX_WIDTH - SANDBOX_PVP_LEFT) * SANDBOX_HEIGHT / (500 * 500);
+// Squads (sandbox only, made from the developer menu): at most this many at the same
+// time, each with its own flower color. Everybody else is in the normal group (FFA).
+inline uint32_t const MAX_SQUADS = 2;
+inline uint32_t const SQUAD_CODE_LENGTH = 6;
+// what the server tells the player who asked for something about a squad
+namespace SquadResult {
+    enum : uint8_t {
+        kNone,
+        kCreated,
+        kJoined,
+        kLeft,
+        kNoSuchSquad,
+        kSquadsFull
+    };
+}
+
+// devStabOSC: the player it hits gets a timer, and when it runs out STAB_TNT_COUNT TNT
+// explode on them (over STAB_BLAST_SECONDS), in a circle that follows them
+inline uint32_t const STAB_COUNTDOWN_SECONDS = 10;
+inline uint32_t const STAB_BLAST_SECONDS = 3;
+inline uint32_t const STAB_TNT_COUNT = 1000;
+inline float const STAB_TNT_DAMAGE = 1;
+inline float const STAB_RADIUS = 260;
+
 inline float arena_width_of(uint8_t gamemode) {
     return gamemode == Gamemode::kSandbox ? SANDBOX_WIDTH : ARENA_WIDTH;
 }
@@ -151,6 +175,7 @@ namespace PetalID {
         kFastest,
         kLegendaryDandelion,
         kClover,
+        kDevStabOSC,
         kNumPetals
     };
 };
@@ -216,6 +241,8 @@ namespace ColorID {
         kBlue,
         kRed,
         kGreen,
+        kPurple,
+        kOrange,
         kNumColors
     };
 };

@@ -63,6 +63,7 @@ void Simulation::on_tick() {
     });
     for_each<kCamera>(tick_culling_behavior);
     for_each<kFlower>(tick_player_behavior);
+    for_each<kFlower>(tick_stab_behavior);
     for_each<kMob>(tick_ai_behavior);
     for_each<kCamera>(tick_player_ai_behavior);
     for_each<kPetal>(tick_petal_behavior);

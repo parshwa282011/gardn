@@ -4,7 +4,9 @@
 
 #include <Shared/Simulation.hh>
 
+#include <array>
 #include <set>
+#include <string>
 #include <vector>
 
 class Client;
@@ -12,6 +14,16 @@ class Client;
 class GameInstance {
     std::set<Client *> clients;
     TeamManager team_manager;
+    // The squads of the sandbox. A squad exists while it has a code; its team entity
+    // (made once in init) is what the flowers of its members have as their team.
+    struct Squad {
+        EntityID team;
+        uint8_t color = 0;
+        std::string code;
+    };
+    std::array<Squad, MAX_SQUADS> squads;
+    void squad_set(Client *, EntityID team, uint8_t color, std::string const &code, uint8_t result);
+    void squad_cleanup();
 public:
     Simulation simulation;
     uint8_t gamemode;
@@ -22,6 +34,11 @@ public:
     void tick();
     void add_client(Client *, EntityID);
     void remove_client(Client *);
+    // The squads (sandbox only): a player is in one, or in the normal group. Each tells
+    // the player how it went (SquadResult)
+    void squad_create(Client *);
+    void squad_join(Client *, std::string const &code);
+    void squad_leave(Client *);
     // The progress saves of an account only exist as the entities of its camera
     // (and in the master). save_progress sends a new one to the master,
     // apply_progress puts a restored one into the camera and its inventory and

@@ -156,3 +156,45 @@ uint8_t DOM::text_input_focused() {
         return (document.activeElement && document.activeElement.tagName == "INPUT") ? 1 : 0;
     });
 }
+
+void DOM::fetch_high_scores() {
+    EM_ASM({
+        try {
+            if (window["gardnScoresBusy"]) return;
+            window["gardnScoresBusy"] = true;
+            // the master is api-game.<domain> when the game is on game.<domain> (like the
+            // leaderboard page does it)
+            const base = /^game\\./.test(location.hostname)
+                ? location.protocol + "//" + location.host.replace(/^game\\./, "api-game.")
+                : location.protocol + "//" + location.hostname + ":55554";
+            fetch(base + "/leaderboard?game=gardn", { headers: { accept: "application/json" }, cache: "no-store" })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(data => {
+                    // (quoted names: the closure compiler of the release build renames the
+                    // others, and these are the names of the JSON of the master)
+                    const lines = [];
+                    const game = (data["games"] || []).find(g => g["id"] === "gardn");
+                    const board = game && (game["boards"] || []).find(b => b["id"] === "gardn_best_score");
+                    if (board)
+                        for (const e of (board["entries"] || []).slice(0, 5))
+                            lines.push(e["rank"] + ". " + e["name"] + " - " + Math.round(e["score"]));
+                    window["gardnScores"] = lines.join("\\n");
+                })
+                .catch(() => {})
+                .finally(() => { window["gardnScoresBusy"] = false; });
+        } catch (e) {
+            window["gardnScoresBusy"] = false;
+        }
+    });
+}
+
+std::string DOM::retrieve_high_scores() {
+    char buffer[1024] = {0};
+    EM_ASM({
+        const bytes = new TextEncoder().encode(window["gardnScores"] || "");
+        const n = Math.min(bytes.length, $1 - 1);
+        HEAPU8.set(bytes.subarray(0, n), $0);
+        HEAPU8[$0 + n] = 0;
+    }, buffer, sizeof buffer);
+    return std::string(buffer);
+}

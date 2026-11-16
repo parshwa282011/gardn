@@ -153,19 +153,76 @@ static Element *make_list(bool petals) {
 
 static Element *make_tab_buttons() {
     return new Ui::HContainer({
-        new Ui::Button(100, 28,
+        new Ui::Button(66, 28,
             new Ui::StaticText(14, "Petals"),
             [](Element *, uint8_t e){ if (e == Ui::kClick) Game::dev_tab = 0; },
             [](){ return Game::dev_tab == 0; },
             { .fill = 0xff5a9fdb, .line_width = 3, .round_radius = 3 }
         ),
-        new Ui::Button(100, 28,
+        new Ui::Button(66, 28,
             new Ui::StaticText(14, "Mobs"),
             [](Element *, uint8_t e){ if (e == Ui::kClick) Game::dev_tab = 1; },
             [](){ return Game::dev_tab == 1; },
             { .fill = 0xff5a9fdb, .line_width = 3, .round_radius = 3 }
+        ),
+        new Ui::Button(66, 28,
+            new Ui::StaticText(14, "Squads"),
+            [](Element *, uint8_t e){ if (e == Ui::kClick) Game::dev_tab = 2; },
+            [](){ return Game::dev_tab == 2; },
+            { .fill = 0xff9d7bf0, .line_width = 3, .round_radius = 3 }
         )
-    }, 0, 6, {});
+    }, 0, 4, {});
+}
+
+// the squad the player is in, as the camera says it (empty: the normal group)
+static std::string my_squad_code() {
+    if (!Game::simulation.ent_exists(Game::camera_id)) return "";
+    return Game::simulation.get_ent(Game::camera_id).get_squad_code();
+}
+
+// The squads tab: join a squad with its code, make one, or be with the normal players
+// (the FFA group). There can be 2 squads at the same time, each with its own color.
+static Element *make_squad_panel() {
+    Element *panel = new Ui::VContainer({
+        new Ui::StaticText(14, "Join a squad or play with the"),
+        new Ui::StaticText(14, "normal players (FFA group)"),
+        new Ui::DynamicText(15, [](){
+            std::string code = my_squad_code();
+            return code.empty() ? std::string{"You are: normal player"} : "You are: squad " + code;
+        }, { .fill = 0xffffe763 }),
+        new Ui::DynamicText(12, [](){
+            std::string code = my_squad_code();
+            return code.empty() ? std::string{""} : std::string{"Give this code to friends so they can join"};
+        }),
+        new Ui::Button(206, 28,
+            new Ui::StaticText(14, "Create a squad"),
+            [](Element *, uint8_t e){ if (e == Ui::kClick) Game::send_dev_squad_create(); },
+            nullptr,
+            { .fill = 0xff1dd129, .line_width = 3, .round_radius = 3 }
+        ),
+        new Ui::HContainer({
+            new Ui::TextInput(Game::dev_squad_text, 118, 25, SQUAD_CODE_LENGTH, {}),
+            new Ui::Button(80, 25,
+                new Ui::StaticText(13, "Join"),
+                [](Element *, uint8_t e){
+                    if (e != Ui::kClick) return;
+                    if (!Game::dev_squad_text.empty()) Game::send_dev_squad_join(Game::dev_squad_text);
+                },
+                nullptr,
+                { .fill = 0xff5a9fdb, .line_width = 3, .round_radius = 3 }
+            )
+        }, 0, 8, {}),
+        new Ui::Button(206, 28,
+            new Ui::StaticText(14, "Leave: normal players"),
+            [](Element *, uint8_t e){ if (e == Ui::kClick) Game::send_dev_squad_leave(); },
+            nullptr,
+            { .fill = 0xffec6869, .line_width = 3, .round_radius = 3 }
+        ),
+        new Ui::StaticText(11, "At most 2 squads at the same time")
+    }, 0, 8, {
+        .should_render = [](){ return Game::dev_tab == 2; }
+    });
+    return panel;
 }
 
 static Element *make_number_row(std::string &text, uint32_t max_len, char const *label, void (*send)(uint32_t), uint32_t cap) {
@@ -191,9 +248,19 @@ Element *Ui::make_dev_menu() {
         make_tab_buttons(),
         make_number_row(Game::dev_level_text, 3, "Set level", Game::send_dev_set_level, MAX_LEVEL),
         make_number_row(Game::dev_score_text, 10, "Set score", Game::send_dev_set_score, 0xffffffff),
-        new Ui::TextInput(Game::dev_search_text, 206, 25, 20, { .line_width = 3, .round_radius = 3 }),
+        new Ui::TextInput(Game::dev_search_text, 206, 25, 20, {
+            .line_width = 3, .round_radius = 3,
+            .should_render = [](){ return Game::dev_tab != 2; }
+        }),
         make_list(true),
         make_list(false),
+        make_squad_panel(),
+        new Ui::Button(206, 28,
+            new Ui::StaticText(14, "Reload all petals"),
+            [](Element *, uint8_t e){ if (e == Ui::kClick) Game::send_dev_reload_petals(); },
+            nullptr,
+            { .fill = 0xff1dd129, .line_width = 3, .round_radius = 3 }
+        ),
         new Ui::HContainer({
             new Ui::Button(100, 28,
                 new Ui::StaticText(13, "Clear mobs"),
@@ -214,7 +281,8 @@ Element *Ui::make_dev_menu() {
                 { .fill = 0xffec6869, .line_width = 3, .round_radius = 3 }
             )
         }, 0, 6, {}),
-        new Ui::StaticText(11, "Sandbox only, nothing is saved - \\ or ESC closes")
+        new Ui::StaticText(11, "Sandbox only, nothing is saved - \\ or ESC closes"),
+        new Ui::StaticText(11, "You can still move and use keybinds unless typing")
     }, 12, 8, {
         .fill = 0xd0222222,
         .line_width = 6,

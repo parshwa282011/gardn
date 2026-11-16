@@ -33,6 +33,7 @@ void tick_petal_behavior(Simulation *sim, Entity &petal) {
                 petal.acceleration.unit_normal(petal.get_angle()).set_magnitude(4 * PLAYER_ACCELERATION);
                 break;
             }
+            case PetalID::kDevStabOSC:
             case PetalID::kHomingMissile: {
                 EntityID last_target = petal.target;
                 uint8_t flags = petal.get_petal_flags();
@@ -131,6 +132,7 @@ void tick_petal_behavior(Simulation *sim, Entity &petal) {
                 entity_set_despawn_tick(petal, 3 * TPS);
             }
             break;
+        case PetalID::kDevStabOSC:
         case PetalID::kHomingMissile:
             if (BitMath::at(player.input, InputFlags::kAttacking)) {
                 petal.acceleration.unit_normal(petal.get_angle()).set_magnitude(3 * PLAYER_ACCELERATION);

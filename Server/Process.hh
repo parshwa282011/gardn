@@ -15,6 +15,9 @@ void tick_health_behavior(Simulation *, Entity &);
 void tick_petal_behavior(Simulation *, Entity &);
 void tick_player_behavior(Simulation *, Entity &);
 void tick_player_ai_behavior(Simulation *, Entity &);
+void tick_stab_behavior(Simulation *, Entity &);
+// devStabOSC (the first argument) hit the second
+void apply_stab(Simulation *, Entity &, Entity &);
 void tick_tracking_behavior(Simulation *);
 void tick_segment_behavior(Simulation *, Entity &);
 void tick_score_behavior(Simulation *, Entity &);

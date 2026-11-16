@@ -34,6 +34,7 @@ namespace Game {
     std::string disconnect_message;
     uint8_t has_login = 0;
     std::string notice;
+    std::vector<std::string> high_scores;
     double notice_until = 0;
     std::array<uint8_t, PetalID::kNumPetals> seen_petals;
     std::array<uint8_t, MobID::kNumMobs> seen_mobs;
@@ -73,6 +74,7 @@ namespace Game {
     std::string dev_level_text;
     std::string dev_score_text;
     std::string dev_search_text;
+    std::string dev_squad_text;
 
     uint64_t recovery_id = 0;
     uint8_t is_outdated = 0;
@@ -130,6 +132,9 @@ void Game::init() {
     title_ui_window.add_child(
         Ui::make_link_buttons()
     );
+    title_ui_window.add_child(
+        Ui::make_high_scores()
+    );
     game_ui_window.add_child(
         Ui::make_death_main_screen()
     );
@@ -160,6 +165,9 @@ void Game::init() {
     );
     game_ui_window.add_child(
         Ui::make_saving_indicator()
+    );
+    game_ui_window.add_child(
+        Ui::make_stab_timer()
     );
     game_ui_window.add_child(
         Ui::make_stat_screen()
@@ -347,6 +355,30 @@ void Game::tick(double time) {
         Entity &camera = simulation.get_ent(camera_id);
         gamemode = simulation.arena_info.gamemode;
         recovery_id = camera.get_recovery_id();
+        // the answer of the server to a squad request (the dev menu), shown as a notice
+        static uint8_t seen_squad_result = 0;
+        if (camera.get_squad_result() != seen_squad_result) {
+            seen_squad_result = camera.get_squad_result();
+            switch (seen_squad_result & 7) {
+                case SquadResult::kCreated:
+                    show_notice("Squad created. Code: " + camera.get_squad_code() + " (give it to your friends)");
+                    break;
+                case SquadResult::kJoined:
+                    show_notice("You joined the squad " + camera.get_squad_code());
+                    break;
+                case SquadResult::kLeft:
+                    show_notice("You are with the normal players now (FFA)");
+                    break;
+                case SquadResult::kNoSuchSquad:
+                    show_notice("No squad has that code");
+                    break;
+                case SquadResult::kSquadsFull:
+                    show_notice("Both squads exist already: join one with its code, or stay with the normal players");
+                    break;
+                default:
+                    break;
+            }
+        }
         if (!simulation.ent_alive(player_id)) {
             if (camera.get_saving_progress())
                 on_game_screen = 0;
@@ -375,6 +407,10 @@ void Game::tick(double time) {
         }
     }
 
+    // The developer menu does not take the keyboard away: the flower still moves and the
+    // keybinds still work, except while the player is typing in one of its text boxes
+    bool const dev_typing = show_dev_menu && DOM::text_input_focused();
+
     //event poll
     if (Input::is_mobile) {
         for (auto &x : Input::touches) {
@@ -393,6 +429,23 @@ void Game::tick(double time) {
         transition_circle = fclamp(transition_circle / powf(1.05, Ui::dt * 60 / 1000) - Ui::dt / 5, 0, MAX_TRANSITION_CIRCLE);
 
     if (should_render_title_ui()) {
+        // the high scores of the main menu: asked now and then, read often
+        static double next_scores_fetch = 0, next_scores_read = 0;
+        if (timestamp >= next_scores_fetch) {
+            DOM::fetch_high_scores();
+            next_scores_fetch = timestamp + 60000;
+        }
+        if (timestamp >= next_scores_read) {
+            std::string all = DOM::retrieve_high_scores();
+            high_scores.clear();
+            for (size_t at = 0; at < all.size();) {
+                size_t end = all.find('\n', at);
+                if (end == std::string::npos) end = all.size();
+                if (end > at) high_scores.push_back(all.substr(at, end - at));
+                at = end + 1;
+            }
+            next_scores_read = timestamp + 1000;
+        }
         render_title_screen();
         Particle::tick_title(renderer, Ui::dt);
         title_ui_window.render(renderer);
@@ -422,7 +475,7 @@ void Game::tick(double time) {
         renderer.set_global_alpha(0.85);
         renderer.translate(renderer.width/2,renderer.height/2);
         renderer.draw_image(game_ui_renderer);
-        if (!Game::show_chat && !Game::show_dev_menu) {
+        if (!Game::show_chat && !dev_typing) {
             //process keybind petal switches
             if (Input::keys_held_this_tick.contains('X'))
                 Game::swap_all_petals();
@@ -444,7 +497,7 @@ void Game::tick(double time) {
         if (Ui::UiLoadout::selected_with_keys < MAX_SLOT_COUNT &&
             Game::cached_loadout[Game::loadout_count + Ui::UiLoadout::selected_with_keys] == PetalID::kNone)
             Ui::UiLoadout::selected_with_keys = MAX_SLOT_COUNT;
-        if (!Game::show_chat && !Game::show_dev_menu && Ui::UiLoadout::selected_with_keys < MAX_SLOT_COUNT) {
+        if (!Game::show_chat && !dev_typing && Ui::UiLoadout::selected_with_keys < MAX_SLOT_COUNT) {
             if (Input::keys_held_this_tick.contains('T')) {
                 Ui::ui_delete_petal(Ui::UiLoadout::selected_with_keys + Game::loadout_count);
                 Ui::forward_secondary_select();
@@ -474,7 +527,7 @@ void Game::tick(double time) {
     if (alive()) {
         if (!Input::is_mobile) {
             if (Input::keyboard_movement) {
-                if (!Game::show_chat && !Game::show_dev_menu) {
+                if (!Game::show_chat && !dev_typing) {
                     Input::game_inputs.x = 300 * (Input::keys_held.contains('D') - Input::keys_held.contains('A') + Input::keys_held.contains(39) - Input::keys_held.contains(37));
                     Input::game_inputs.y = 300 * (Input::keys_held.contains('S') - Input::keys_held.contains('W') + Input::keys_held.contains(40) - Input::keys_held.contains(38));
                 } else
@@ -483,12 +536,14 @@ void Game::tick(double time) {
                 Input::game_inputs.x = (Input::mouse_x - renderer.width / 2) / Ui::scale;
                 Input::game_inputs.y = (Input::mouse_y - renderer.height / 2) / Ui::scale;
             }
-            uint8_t attack = (!Game::show_chat && !Game::show_dev_menu && Input::keys_held.contains(' ')) || BitMath::at(Input::mouse_buttons_state, Input::LeftMouse);
-            uint8_t defend = (!Game::show_chat && !Game::show_dev_menu && Input::keys_held.contains('\x10')) || BitMath::at(Input::mouse_buttons_state, Input::RightMouse);
+            // the mouse over the dev menu is for the menu, not for the flower: it does not
+            // steer or press the petals (the keyboard still does)
+            bool const over_dev_menu = Game::show_dev_menu && Ui::dev_menu_contains_mouse();
+            uint8_t attack = (!Game::show_chat && !dev_typing && Input::keys_held.contains(' ')) || (!over_dev_menu && BitMath::at(Input::mouse_buttons_state, Input::LeftMouse));
+            uint8_t defend = (!Game::show_chat && !dev_typing && Input::keys_held.contains('\x10')) || (!over_dev_menu && BitMath::at(Input::mouse_buttons_state, Input::RightMouse));
             Input::game_inputs.flags = (attack << InputFlags::kAttacking) | (defend << InputFlags::kDefending);
-            // the mouse over the dev menu is for the menu, not for the flower
-            if (Game::show_dev_menu && Ui::dev_menu_contains_mouse())
-                Input::game_inputs = {};
+            if (over_dev_menu && !Input::keyboard_movement)
+                Input::game_inputs.x = Input::game_inputs.y = 0;
         }
         // nothing pressed: the auto attack / auto defend of K and L stand in
         if (!BitMath::at(Input::game_inputs.flags, InputFlags::kAttacking) &&
@@ -496,7 +551,7 @@ void Game::tick(double time) {
             if (Game::hold_attack) BitMath::set(Input::game_inputs.flags, InputFlags::kAttacking);
             if (Game::hold_defense) BitMath::set(Input::game_inputs.flags, InputFlags::kDefending);
         }
-        if (!Game::show_dev_menu && Input::wheel_delta != 0)
+        if (!(Game::show_dev_menu && Ui::dev_menu_contains_mouse()) && Input::wheel_delta != 0)
             Game::zoom = fclamp(Game::zoom + Input::wheel_delta * 0.002f, 0, 1);
         send_inputs();
     } else
@@ -505,13 +560,13 @@ void Game::tick(double time) {
     if (Input::keys_held_this_tick.contains(';'))
         show_debug = !show_debug;
     // M: mouse <-> keyboard movement (the setting in the settings panel)
-    if (Input::keys_held_this_tick.contains('M') && Game::alive() && !Game::show_chat && !Game::show_dev_menu && !Input::is_mobile) {
+    if (Input::keys_held_this_tick.contains('M') && Game::alive() && !Game::show_chat && !dev_typing && !Input::is_mobile) {
         Input::keyboard_movement = !Input::keyboard_movement;
         Input::freeze_input = 0;
         Game::show_notice(Input::keyboard_movement ? "Keyboard movement (WASD / arrows). Press M to switch back." : "Mouse movement. Press M to switch back.");
     }
     // K: auto attack, L: auto defend (both on: attack and defend at the same time)
-    if (Game::alive() && !show_chat && !show_dev_menu && !DOM::text_input_focused()) {
+    if (Game::alive() && !show_chat && !DOM::text_input_focused()) {
         if (Input::keys_held_this_tick.contains('K')) {
             hold_attack ^= 1;
             Game::show_notice(hold_attack ? "Auto attack on. Press K to turn it off." : "Auto attack off.");
@@ -534,7 +589,12 @@ void Game::tick(double time) {
             if (!show_dev_menu) DOM::blur();
         }
     }
-    if (Input::keys_held_this_tick.contains('\r') && !show_dev_menu) {
+    // (ENTER in a text box of the dev menu ends the typing, it must not open the chat as
+    // well: the box is already blurred when this runs, so the last tick counts too)
+    static bool was_dev_typing = false;
+    bool const enter_for_dev_menu = dev_typing || was_dev_typing;
+    was_dev_typing = dev_typing;
+    if (Input::keys_held_this_tick.contains('\r') && !enter_for_dev_menu) {
         if (!Game::alive())
             Game::spawn_in();
         else

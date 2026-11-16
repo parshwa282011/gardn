@@ -1,3 +1,5 @@
+#include <Server/Process.hh>
+
 #include <Server/EntityFunctions.hh>
 
 #include <Shared/Simulation.hh>
@@ -127,6 +129,8 @@ void on_collide(Simulation *sim, Entity &ent1, Entity &ent2) {
         if ((ent1.health > 0 || ent1.max_health == 0) && (ent2.health > 0 || ent2.max_health == 0)) {
             inflict_damage(sim, ent1.id, ent2.id, ent1.damage, DamageType::kContact);
             inflict_damage(sim, ent2.id, ent1.id, ent2.damage, DamageType::kContact);
+            apply_stab(sim, ent1, ent2);
+            apply_stab(sim, ent2, ent1);
         }
         if (ent1.health == 0 && ent1.max_health > 0) sim->request_delete(ent1.id);
         if (ent2.health == 0 && ent2.max_health > 0) sim->request_delete(ent2.id);

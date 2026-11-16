@@ -87,4 +87,6 @@ namespace Ui {
     Element *make_changelog();
     Element *make_debug_stats();
     Element *make_link_buttons();
+    // top left of the main menu: the best scores of gardn
+    Element *make_high_scores();
 }

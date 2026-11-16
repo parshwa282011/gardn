@@ -18,6 +18,7 @@ set(SRCS
     Render/RenderMob.cc
     Render/RenderName.cc
     Render/RenderPetal.cc
+    Render/RenderStab.cc
     Render/RenderWeb.cc
     Render/Renderer.cc
     Debug.cc
@@ -48,6 +49,7 @@ set(SRCS
     Ui/InGame/Tooltip.cc
     Ui/TitleScreen/Changelog.cc
     Ui/TitleScreen/DeathScreen.cc
+    Ui/TitleScreen/HighScores.cc
     Ui/TitleScreen/MainScreen.cc
     Ui/TitleScreen/MobGallery.cc
     Ui/TitleScreen/PetalGallery.cc

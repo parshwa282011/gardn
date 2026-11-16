@@ -959,6 +959,41 @@ void draw_static_petal_single(PetalID::T id, Renderer &ctx, PetalRenderAttribute
             ctx.fill();
             ctx.stroke();
             break;
+        case PetalID::kDevStabOSC: {
+            // the locked-on missile in a magic glow, with a stick of TNT on its back
+            float pulse = BitMath::at(attrs.flags, PetalRenderFlags::kAnimated) ? 0.5f + 0.5f * sinf(attrs.animation * 0.01f) : 0.5f;
+            {
+                RenderContext glow(&ctx);
+                ctx.set_fill(0x40b05bff);
+                ctx.begin_path();
+                ctx.arc(0, 0, r * (1.5f + 0.25f * pulse));
+                ctx.fill();
+                ctx.set_fill(0x60ff6bd6);
+                ctx.begin_path();
+                ctx.arc(0, 0, r * (1.0f + 0.15f * pulse));
+                ctx.fill();
+            }
+            {
+                RenderContext missile(&ctx);
+                draw_static_petal_single(PetalID::kHomingMissile, ctx, attrs);
+            }
+            ctx.set_fill(0xffd62828);
+            ctx.set_stroke(0xff7a1010);
+            ctx.set_line_width(1.5);
+            ctx.round_line_join();
+            ctx.begin_path();
+            ctx.round_rect(-6, -3, 9, 6, 1.5);
+            ctx.fill();
+            ctx.stroke();
+            ctx.set_stroke(0xffffe6a8);
+            ctx.set_line_width(1);
+            ctx.round_line_cap();
+            ctx.begin_path();
+            ctx.move_to(3, 0);
+            ctx.qcurve_to(6, -4, 8, -2);
+            ctx.stroke();
+            break;
+        }
         case PetalID::kHomingMissile: {
             ctx.scale(0.8);
             float x = -20;

@@ -17,6 +17,7 @@
 #include <cctype>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 Client::Client() : game(nullptr) {}
@@ -407,6 +408,31 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
                     summon_mob_near(simulation, player, (MobID::T) mob_id);
                     break;
                 }
+                case DevCommandID::kReloadPetals: {
+                    // every petal that is not out is ready to come out right now
+                    for (uint32_t i = 0; i < player.get_loadout_count(); ++i) {
+                        LoadoutSlot &slot = player.loadout[i];
+                        if (slot.get_petal_id() == PetalID::kNone) continue;
+                        slot.already_spawned = 1;
+                        for (uint32_t j = 0; j < slot.size(); ++j)
+                            if (!simulation->ent_alive(slot.petals[j].ent_id))
+                                slot.petals[j].reload = std::numeric_limits<game_tick_t>::max();
+                    }
+                    break;
+                }
+                case DevCommandID::kSquadCreate:
+                    client->game->squad_create(client);
+                    break;
+                case DevCommandID::kSquadJoin: {
+                    if (client->check_invalid(validator.validate_string(2 * SQUAD_CODE_LENGTH))) return;
+                    std::string code;
+                    reader.read<std::string>(code);
+                    client->game->squad_join(client, code);
+                    break;
+                }
+                case DevCommandID::kSquadLeave:
+                    client->game->squad_leave(client);
+                    break;
                 case DevCommandID::kClearMobs: {
                     // they just go: no drops, no score
                     simulation->for_each<kMob>([&](Simulation *sim, Entity &mob) {
