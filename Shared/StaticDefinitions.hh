@@ -68,7 +68,7 @@ inline uint32_t const SANDBOX_HEIGHT = 4000;
 inline uint32_t const SANDBOX_PVP_LEFT = SANDBOX_WIDTH / 2;
 // The PvP area has 25 times the mob density of the first zone (which is 1): the zones
 // keep density * area / (500 * 500) mobs, so 1600 here
-inline uint32_t const SANDBOX_PVP_DENSITY = 25;
+inline uint32_t const SANDBOX_PVP_DENSITY = 10;
 inline uint32_t const SANDBOX_MOB_CAP = SANDBOX_PVP_DENSITY * (SANDBOX_WIDTH - SANDBOX_PVP_LEFT) * SANDBOX_HEIGHT / (500 * 500);
 // Squads (sandbox only, made from the developer menu): at most this many at the same
 // time, each with its own flower color. Everybody else is in the normal group (FFA).
