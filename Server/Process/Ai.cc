@@ -455,6 +455,7 @@ void tick_ai_behavior(Simulation *sim, Entity &ent) {
             tick_hornet_aggro(sim, ent);
             break;
         case MobID::kBoulder:
+        case MobID::kMountain:
         case MobID::kRock:
         case MobID::kCactus:
         case MobID::kSquare:

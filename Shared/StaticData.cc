@@ -1418,6 +1418,20 @@ std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{
             .hole = 1
         }
     },
+    {
+        .name = "Mountain",
+        .description = "A boulder, but 5 times bigger. It also doesn't do much.",
+        .rarity = RarityID::kUnusual,
+        .health = {40.0, 60.0},
+        .damage = 10.0,
+        .radius = {250.0, 375.0},
+        .xp = 10,
+        // (no drops: they would take chances away from the mobs that drop the same petals)
+        .drops = {},
+        .attributes = {
+            .stationary = 1
+        }
+    },
 }};
 
 std::array<StaticArray<float, MAX_DROPS_PER_MOB>, MobID::kNumMobs> const MOB_DROP_CHANCES = [](){

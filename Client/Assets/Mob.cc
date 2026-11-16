@@ -373,6 +373,7 @@ void draw_static_mob(MobID::T mob_id, Renderer &ctx, MobRenderAttributes attr) {
             break;
         }
         case MobID::kRock:
+        case MobID::kMountain:
         case MobID::kBoulder: {
             SET_BASE_COLOR(0xff777777)
             SeedGenerator gen(std::floor(radius) * 1957264 + 295726);

@@ -209,6 +209,7 @@ namespace MobID {
         kDigger,
         kFireAnt,
         kAntBurrow,
+        kMountain,
         kNumMobs
     };
 };
