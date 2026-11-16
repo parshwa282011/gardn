@@ -15,6 +15,21 @@
 
 void render_petal(Renderer &ctx, Entity const &ent) {
     ctx.scale(ent.get_radius() / PETAL_DATA[ent.get_petal_id()].radius);
+    if (BitMath::at(ent.get_petal_flags(), PetalFlags::kTankShell)) {
+        // a shell of the Tank: a dark circle with a hot core
+        ctx.set_fill(0xff3a3a40);
+        ctx.set_stroke(0xff1d1d21);
+        ctx.set_line_width(3);
+        ctx.begin_path();
+        ctx.arc(0, 0, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.set_fill(0xffff9a3c);
+        ctx.begin_path();
+        ctx.arc(0, 0, 4.5);
+        ctx.fill();
+        return;
+    }
     PetalRenderAttributes attrs = {ent.animation, ent.special_animation, 1 << PetalRenderFlags::kAnimated};
     if (BitMath::at(ent.get_petal_flags(), PetalFlags::kLockedOn))
         BitMath::set(attrs.flags, PetalRenderFlags::kSpecial);

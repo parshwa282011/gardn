@@ -231,6 +231,36 @@ void draw_static_mob(MobID::T mob_id, Renderer &ctx, MobRenderAttributes attr) {
             ctx.fill();
             break;
         }
+        case MobID::kTank: {
+            // my own turret: a round body on a base, a barrel on the front (the mob turns)
+            SET_BASE_COLOR(0xff5d9cd6)
+            ctx.scale(radius / 42);
+            ctx.set_fill(0xff8d8d95);
+            ctx.set_stroke(0xff55555c);
+            ctx.set_line_width(5);
+            ctx.round_line_join();
+            ctx.begin_path();
+            ctx.round_rect(10, -14, 52, 28, 4);
+            ctx.fill();
+            ctx.stroke();
+            ctx.set_fill(0xff6e6e76);
+            ctx.begin_path();
+            ctx.round_rect(54, -17, 12, 34, 3);
+            ctx.fill();
+            ctx.stroke();
+            ctx.set_fill(base_color);
+            ctx.set_stroke(Renderer::HSV(base_color, 0.8));
+            ctx.begin_path();
+            ctx.arc(0, 0, 42);
+            ctx.fill();
+            ctx.stroke();
+            ctx.set_stroke(0x40ffffff);
+            ctx.set_line_width(3);
+            ctx.begin_path();
+            ctx.partial_arc(0, 0, 30, M_PI * 1.1, M_PI * 1.6, 0);
+            ctx.stroke();
+            break;
+        }
         case MobID::kLadybug:
         case MobID::kMassiveLadybug:
         case MobID::kDarkLadybug:

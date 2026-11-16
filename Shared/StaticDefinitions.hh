@@ -86,6 +86,11 @@ namespace SquadResult {
     };
 }
 
+// the shells of the Tank mob explode where they hit (a flower, a mob or a wall): everything
+// of another team inside the circle takes this much, once
+inline float const TANK_EXPLOSION_RADIUS = 90;
+inline float const TANK_EXPLOSION_DAMAGE = 10;
+
 // devStabOSC: the player it hits gets a timer, and when it runs out STAB_TNT_COUNT TNT
 // explode on them (over STAB_BLAST_SECONDS), in a circle that follows them
 inline uint32_t const STAB_COUNTDOWN_SECONDS = 10;
@@ -211,6 +216,7 @@ namespace MobID {
         kAntBurrow,
         kMountain,
         kBumblebee,
+        kTank,
         kNumMobs
     };
 };
@@ -261,7 +267,8 @@ namespace AIState {
 namespace AnimationType {
     enum {
         kLightning,
-        kUranium
+        kUranium,
+        kExplosion
     };
 };
 
@@ -312,7 +319,9 @@ namespace InputFlags {
 namespace PetalFlags {
     enum {
         kLockedOn,
-        kSplitProjectile
+        kSplitProjectile,
+        // a shell of the Tank mob: a circle that explodes on whatever it hits
+        kTankShell
     };
 };
 

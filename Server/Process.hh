@@ -18,6 +18,9 @@ void tick_player_ai_behavior(Simulation *, Entity &);
 void tick_stab_behavior(Simulation *, Entity &);
 // devStabOSC (the first argument) hit the second
 void apply_stab(Simulation *, Entity &, Entity &);
+// the shells of the Tank mob explode when they hit something or reach a wall
+void tank_shell_hit(Simulation *, Entity &);
+void tick_tank_shell(Simulation *, Entity &);
 void tick_tracking_behavior(Simulation *);
 void tick_segment_behavior(Simulation *, Entity &);
 void tick_score_behavior(Simulation *, Entity &);

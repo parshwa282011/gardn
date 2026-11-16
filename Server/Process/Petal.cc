@@ -14,6 +14,8 @@ void tick_petal_behavior(Simulation *sim, Entity &petal) {
         sim->request_delete(petal.id);
         return;
     }
+    tick_tank_shell(sim, petal);
+    if (petal.pending_delete) return;
     Entity &player = sim->get_ent(petal.get_parent());
     struct PetalData const &petal_data = PETAL_DATA[petal.get_petal_id()];
     if (petal_data.attributes.rotation_style == PetalAttributes::kPassiveRot) {

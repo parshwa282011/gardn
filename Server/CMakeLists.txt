@@ -26,6 +26,7 @@ set(SOURCES
     Process/Score.cc
     Process/Segment.cc
     Process/Stab.cc
+    Process/Tank.cc
     Process/Tracking.cc
     Client.cc
     Game.cc

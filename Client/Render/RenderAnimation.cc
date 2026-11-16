@@ -42,6 +42,26 @@ void render_animation(Simulation *sim, Renderer &ctx, Entity const &ent) {
             ctx.arc(ent.get_x(), ent.get_y(), ent.get_radius() * (1 - 0.25 * ent.deletion_animation));
             ctx.fill();
             break;
+        case AnimationType::kExplosion: {
+            // grows from the middle and fades (deletion_animation goes from 0 to 1)
+            float t = fclamp(ent.deletion_animation, 0, 1);
+            float r = ent.get_radius();
+            ctx.set_global_alpha(1 - t);
+            ctx.set_fill(0xffff8a1f);
+            ctx.begin_path();
+            ctx.arc(ent.get_x(), ent.get_y(), r * (0.35f + 0.65f * t));
+            ctx.fill();
+            ctx.set_fill(0xfffff3a0);
+            ctx.begin_path();
+            ctx.arc(ent.get_x(), ent.get_y(), r * (0.2f + 0.4f * t));
+            ctx.fill();
+            ctx.set_stroke(0xffffffff);
+            ctx.set_line_width(3);
+            ctx.begin_path();
+            ctx.arc(ent.get_x(), ent.get_y(), r * (0.5f + 0.7f * t));
+            ctx.stroke();
+            break;
+        }
         default:
             assert(!"Didn't cover animation render");
             break;

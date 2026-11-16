@@ -162,6 +162,46 @@ static void tick_bumblebee(Simulation *sim, Entity &ent, float speed) {
     ent.acceleration *= 2;
 }
 
+// The Tank never moves: it turns to the nearest enemy in reach and shoots a shell that
+// explodes where it lands (like a hornet that cannot move)
+static void tick_tank(Simulation *sim, Entity &ent) {
+    ent.acceleration.set(0, 0);
+    if (sim->ent_alive(ent.target)) {
+        Entity &target = sim->get_ent(ent.target);
+        Vector v(target.get_x() - ent.get_x(), target.get_y() - ent.get_y());
+        _focus_lose_clause(ent, v);
+        float dist = v.magnitude();
+        ent.set_angle(v.angle());
+        ++ent.ai_shooting_tick;
+        if (ent.ai_shooting_tick >= 1.5 * TPS && dist < 1000) {
+            ent.ai_shooting_tick = 0;
+            // (a bit in front of the barrel)
+            Entity &shell = alloc_petal(sim, PetalID::kMissile, ent);
+            shell.set_petal_flags(shell.get_petal_flags() | (1 << PetalFlags::kTankShell));
+            shell.set_radius(12);
+            // the damage is the explosion's, not the shell's
+            shell.damage = 0;
+            shell.health = shell.max_health = 10;
+            entity_set_despawn_tick(shell, 3 * TPS);
+            shell.set_angle(ent.get_angle());
+            Vector muzzle;
+            muzzle.unit_normal(ent.get_angle()).set_magnitude(ent.get_radius() + 30);
+            shell.set_x(ent.get_x() + muzzle.x);
+            shell.set_y(ent.get_y() + muzzle.y);
+            shell.acceleration.unit_normal(ent.get_angle()).set_magnitude(40 * PLAYER_ACCELERATION);
+        }
+        return;
+    }
+    if (!(ent.target == NULL_ENTITY)) {
+        ent.target = NULL_ENTITY;
+        ent.ai_tick = 0;
+    }
+    if (ent.ai_shooting_tick > 0) --ent.ai_shooting_tick;
+    ent.target = find_nearest_enemy(sim, ent, ent.detection_radius);
+    // looking around while nobody is there
+    ent.set_angle(ent.get_angle() + 0.4f / TPS);
+}
+
 static void tick_hornet_aggro(Simulation *sim, Entity &ent) {
     if (sim->ent_alive(ent.target)) {
         Entity &target = sim->get_ent(ent.target);
@@ -474,6 +514,9 @@ void tick_ai_behavior(Simulation *sim, Entity &ent) {
             break;
         case MobID::kBumblebee:
             tick_bumblebee(sim, ent, 3.0);
+            break;
+        case MobID::kTank:
+            tick_tank(sim, ent);
             break;
         case MobID::kHornet:
             tick_hornet_aggro(sim, ent);
