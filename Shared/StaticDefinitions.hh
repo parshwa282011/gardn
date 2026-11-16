@@ -210,6 +210,7 @@ namespace MobID {
         kFireAnt,
         kAntBurrow,
         kMountain,
+        kBumblebee,
         kNumMobs
     };
 };
@@ -389,6 +390,8 @@ struct MobAttributes {
     uint8_t stationary;
     uint8_t hole;
     struct PoisonDamage poison_damage;
+    // taken off every hit it takes (like the armor of the Bone petal)
+    float armor = 0;
 };
 
 struct MobData {

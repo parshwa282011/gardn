@@ -154,6 +154,83 @@ void draw_static_mob(MobID::T mob_id, Renderer &ctx, MobRenderAttributes attr) {
             ctx.arc(40,15,5);
             ctx.fill();
             break;
+        case MobID::kBumblebee: {
+            // my own bumblebee: a round fuzzy body, all curves (the hit circle is 28)
+            SET_BASE_COLOR(0xffffd23f)
+            ctx.scale(radius / 28);
+            float flap = animation_value * 5;
+            // wings, flapping
+            ctx.set_fill(0x90ffffff);
+            ctx.set_stroke(0x60dfe8f0);
+            ctx.set_line_width(2);
+            ctx.begin_path();
+            ctx.ellipse(-4, -24 - flap, 17, 10, -0.45);
+            ctx.fill();
+            ctx.stroke();
+            ctx.begin_path();
+            ctx.ellipse(-4, 24 + flap, 17, 10, 0.45);
+            ctx.fill();
+            ctx.stroke();
+            // stinger
+            ctx.set_fill(0xff333333);
+            ctx.set_stroke(0xff292929);
+            ctx.set_line_width(4);
+            ctx.round_line_cap();
+            ctx.round_line_join();
+            ctx.begin_path();
+            ctx.move_to(-27, 7);
+            ctx.qcurve_to(-34, 3, -39, 0);
+            ctx.qcurve_to(-34, -3, -27, -7);
+            ctx.fill();
+            ctx.stroke();
+            // body, with curved stripes
+            ctx.set_fill(base_color);
+            ctx.begin_path();
+            ctx.ellipse(0, 0, 33, 28);
+            ctx.fill();
+            {
+                RenderContext context(&ctx);
+                ctx.clip();
+                ctx.set_stroke(0xff333333);
+                ctx.set_line_width(8);
+                ctx.butt_line_cap();
+                for (float x : { -22.0f, -3.0f, 16.0f }) {
+                    ctx.begin_path();
+                    ctx.move_to(x - 4, -34);
+                    ctx.qcurve_to(x + 4, 0, x - 4, 34);
+                    ctx.stroke();
+                }
+            }
+            ctx.round_line_cap();
+            ctx.set_stroke(Renderer::HSV(base_color, 0.8));
+            ctx.set_line_width(5);
+            ctx.begin_path();
+            ctx.ellipse(0, 0, 33, 28);
+            ctx.stroke();
+            // soft fuzz on the back
+            ctx.set_stroke(0x50fff3b0);
+            ctx.set_line_width(3);
+            ctx.begin_path();
+            ctx.partial_arc(0, 0, 22, M_PI * 1.15, M_PI * 1.85, 0);
+            ctx.stroke();
+            // antennae
+            ctx.set_stroke(0xff333333);
+            ctx.set_line_width(3);
+            ctx.begin_path();
+            ctx.move_to(28, -6);
+            ctx.qcurve_to(36, -6, 41, -16);
+            ctx.move_to(28, 6);
+            ctx.qcurve_to(36, 6, 41, 16);
+            ctx.stroke();
+            ctx.set_fill(0xff333333);
+            ctx.begin_path();
+            ctx.arc(41, -16, 4.5);
+            ctx.fill();
+            ctx.begin_path();
+            ctx.arc(41, 16, 4.5);
+            ctx.fill();
+            break;
+        }
         case MobID::kLadybug:
         case MobID::kMassiveLadybug:
         case MobID::kDarkLadybug:

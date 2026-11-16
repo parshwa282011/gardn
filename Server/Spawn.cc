@@ -59,6 +59,7 @@ static Entity &__alloc_mob(
     mob.health = mob.max_health = data.health.get_single(seed);
     mob.damage = data.damage;
     mob.poison_damage = data.attributes.poison_damage;
+    mob.armor = data.attributes.armor;
     mob.set_health_ratio(1);
 
     mob.detection_radius = data.attributes.aggro_radius;

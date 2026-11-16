@@ -1432,6 +1432,19 @@ std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{
             .stationary = 1
         }
     },
+    {
+        .name = "Bumblebee",
+        .description = "Very fast and armored. Leave it alone and it leaves you alone.",
+        .rarity = RarityID::kRare,
+        .health = {50.0},
+        .damage = 3.0,
+        .radius = {28.0},
+        .xp = 15,
+        .drops = {},
+        .attributes = {
+            .armor = 10
+        }
+    },
 }};
 
 std::array<StaticArray<float, MAX_DROPS_PER_MOB>, MobID::kNumMobs> const MOB_DROP_CHANCES = [](){

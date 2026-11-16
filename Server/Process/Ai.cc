@@ -141,6 +141,27 @@ static void tick_bee_passive(Simulation *sim, Entity &ent) {
     }
 }
 
+// Leaves everybody alone until it is hurt (that is what gives it a target), then chases
+// the one who did it, a lot faster than a flower can run
+static void tick_bumblebee(Simulation *sim, Entity &ent, float speed) {
+    if (sim->ent_alive(ent.target)) {
+        Entity &target = sim->get_ent(ent.target);
+        Vector v(target.get_x() - ent.get_x(), target.get_y() - ent.get_y());
+        _focus_lose_clause(ent, v);
+        v.set_magnitude(PLAYER_ACCELERATION * speed);
+        ent.acceleration = v;
+        ent.set_angle(v.angle());
+        return;
+    }
+    if (!(ent.target == NULL_ENTITY)) {
+        ent.target = NULL_ENTITY;
+        ent.ai_state = AIState::kIdle;
+        ent.ai_tick = 0;
+    }
+    tick_bee_passive(sim, ent);
+    ent.acceleration *= 2;
+}
+
 static void tick_hornet_aggro(Simulation *sim, Entity &ent) {
     if (sim->ent_alive(ent.target)) {
         Entity &target = sim->get_ent(ent.target);
@@ -450,6 +471,9 @@ void tick_ai_behavior(Simulation *sim, Entity &ent) {
                 spawned.set_parent(ent.get_parent());
             }
             tick_default_aggro(sim, ent, 0.95);
+            break;
+        case MobID::kBumblebee:
+            tick_bumblebee(sim, ent, 3.0);
             break;
         case MobID::kHornet:
             tick_hornet_aggro(sim, ent);
