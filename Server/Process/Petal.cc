@@ -177,7 +177,7 @@ void tick_petal_behavior(Simulation *sim, Entity &petal) {
                 petal.velocity.unit_normal(spray_angle).set_magnitude(20 * PLAYER_ACCELERATION);
                 petal.set_petal_flags(petal.get_petal_flags() & ~(1 << PetalFlags::kSplitProjectile));
                 petal.heading_angle = spray_angle;
-                entity_set_despawn_tick(petal, 1.0 * TPS);
+                entity_set_despawn_tick(petal, 3.0 * TPS);
                 for (uint32_t i = 1; i < petal_data.count; ++i) {
                     Entity &new_petal = alloc_petal(sim, petal.get_petal_id(), player);
                     new_petal.friction = DEFAULT_FRICTION;
@@ -188,7 +188,7 @@ void tick_petal_behavior(Simulation *sim, Entity &petal) {
                     new_petal.velocity
                         .unit_normal(new_petal.heading_angle)
                         .set_magnitude(20 * PLAYER_ACCELERATION);
-                    entity_set_despawn_tick(new_petal, 1.0 * TPS);
+                    entity_set_despawn_tick(new_petal, 3.0 * TPS);
                 }
             }
             break;
