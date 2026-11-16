@@ -262,7 +262,7 @@ void tick_player_behavior(Simulation *sim, Entity &player) {
         player.set_face_flags(player.get_face_flags() | (1 << FaceFlags::kHoneyed));
     if (player.get_dev())
         player.set_face_flags(player.get_face_flags() | (1 << FaceFlags::kDeveloper));
-    float rot = (BASE_PETAL_ROTATION_SPEED * (player.honey_ticks > 0 ? 0.5 : 1) + buffs.extra_rot) / TPS;
+    float rot = ((BASE_PETAL_ROTATION_SPEED + buffs.extra_rot) * (player.honey_ticks > 0 ? 0.5 : 1)) / TPS;
     if (buffs.yinyang_count < 8) {
         switch (buffs.yinyang_count % 3) {
             case 0:

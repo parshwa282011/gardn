@@ -363,7 +363,7 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
         .name = "Peas",
         .description = "4 in 1 deal, now with a secret ingredient: poison",
         .health = 5.0,
-        .damage = 2.0,
+        .damage = 8.0,
         .radius = 7.0,
         .reload = 1.0,
         .count = 4,
@@ -372,8 +372,8 @@ std::array<struct PetalData, PetalID::kNumPetals> const PETAL_DATA = {{
             .clump_radius = 8,
             .secondary_reload = 0.5,
             .poison_damage = {
-                .damage = 20.0,
-                .time = 0.5
+                .damage = 3.0,
+                .time = 1.0
             },
             .defend_only = 1,
             .split_projectile = 1,
@@ -1421,12 +1421,12 @@ std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{
     {
         .name = "Mountain",
         .description = "A boulder, but 5 times bigger. It also doesn't do much.",
-        .rarity = RarityID::kUnusual,
-        .health = {40.0, 60.0},
+        .rarity = RarityID::kLegendary,
+        .health = {2000.0, 3000.0},
         .damage = 10.0,
-        .radius = {250.0, 375.0},
-        .xp = 10,
-        // (no drops: they would take chances away from the mobs that drop the same petals)
+        .radius = {400.0, 500.0},
+        .xp = 1000,
+        .drops = {},
         .drops = {},
         .attributes = {
             .stationary = 1
@@ -1456,7 +1456,6 @@ std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{
         .drops = {},
         .attributes = {
             .aggro_radius = 900,
-            .stationary = 1,
             .armor = 20
         }
     },
