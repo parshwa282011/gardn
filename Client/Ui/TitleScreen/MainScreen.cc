@@ -405,7 +405,7 @@ Element *Ui::make_link_buttons() {
                 ctx.fill();
             }, 40, 40),
             [](Element *elt, uint8_t e){
-                if (e == Ui::kClick) DOM::open_page("https://github.com/maxnest0x0/gardn");
+                if (e == Ui::kClick) DOM::open_page("https://github.com/parshwa282011/gardn");
             },
             nullptr,
             { .fill = 0xff333333, .line_width = 4, .round_radius = 4 }
