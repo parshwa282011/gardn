@@ -39,6 +39,14 @@ void Game::on_message(uint8_t *ptr, uint32_t len) {
             simulation.arena_info.read(&reader, !seen_arena);
             break;
         }
+        case Clientbound::kVoiceRelay: {
+            // a piece of the handshake of a nearby player's voice connection
+            uint32_t from = reader.read<uint32_t>();
+            std::string text;
+            reader.read<std::string>(text);
+            DOM::voice_signal_in(from, text);
+            break;
+        }
         default:
             break;
     }
@@ -171,4 +179,21 @@ void Game::send_dev_squad_join(std::string const &code) {
     writer.write<uint8_t>(DevCommandID::kSquadJoin);
     writer.write<std::string>(code.substr(0, SQUAD_CODE_LENGTH));
     Game::socket.send(writer.packet, writer.at - writer.packet);
+}
+
+void Game::send_voice_state(uint8_t state) {
+    if (!Game::alive()) return;
+    Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
+    writer.write<uint8_t>(Serverbound::kVoiceState);
+    writer.write<uint8_t>(state);
+    socket.send(writer.packet, writer.at - writer.packet);
+}
+
+void Game::send_voice_signal(uint32_t to, std::string const &text) {
+    if (!Game::alive() || text.size() > MAX_VOICE_SIGNAL_LENGTH) return;
+    Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
+    writer.write<uint8_t>(Serverbound::kVoiceSignal);
+    writer.write<uint32_t>(to);
+    writer.write<std::string>(text);
+    socket.send(writer.packet, writer.at - writer.packet);
 }

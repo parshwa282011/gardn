@@ -78,6 +78,7 @@ SINGLE(Flower, loadout_count, uint8_t) \
 SINGLE(Flower, face_flags, uint8_t) \
 SINGLE(Flower, sponge_stored, uint32_t) \
 SINGLE(Flower, equip_flags, uint8_t) \
+SINGLE(Flower, voice, uint8_t) \
 SINGLE(Flower, stab_timer, uint8_t) \
 SINGLE(Flower, stab_blast, uint8_t) \
 SINGLE(Flower, leaderboard_pos, uint8_t) \

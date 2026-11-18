@@ -198,3 +198,41 @@ std::string DOM::retrieve_high_scores() {
     }, buffer, sizeof buffer);
     return std::string(buffer);
 }
+
+// ---- proximity voice chat. The script itself is in index.html (window.gardnVoice, plain
+// JavaScript the closure compiler does not touch); these only pass things across.
+// (EM_JS: the body has commas, which EM_ASM cannot take)
+extern "C" {
+EM_JS(void, voice_init_js, (), {
+    window["gardnVoiceBridge"] = {
+        "signal": function(to, text) { _voice_signal(to, stringToNewUTF8(text)); },
+        "state": function(state) { _voice_state(state); },
+        "notice": function(text) { _voice_notice(stringToNewUTF8(text)); }
+    };
+});
+}
+
+void DOM::voice_init() {
+    voice_init_js();
+}
+
+void DOM::voice_toggle() {
+    EM_ASM({
+        const v = window["gardnVoice"];
+        if (v) v["toggle"]();
+    });
+}
+
+void DOM::voice_update(uint32_t mine, std::string const &peers) {
+    EM_ASM({
+        const v = window["gardnVoice"];
+        if (v) v["update"]($0, UTF8ToString($1));
+    }, mine, peers.c_str());
+}
+
+void DOM::voice_signal_in(uint32_t from, std::string const &text) {
+    EM_ASM({
+        const v = window["gardnVoice"];
+        if (v) v["signal"]($0, UTF8ToString($1));
+    }, from, text.c_str());
+}

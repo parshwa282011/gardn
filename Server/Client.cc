@@ -448,6 +448,46 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
             }
             break;
         }
+        case Serverbound::kVoiceState: {
+            if (!client->alive()) break;
+            if (client->check_invalid(validator.validate_uint8())) return;
+            uint8_t state = reader.read<uint8_t>();
+            if (client->check_invalid(state <= VoiceState::kTalking)) return;
+            Simulation *simulation = &client->game->simulation;
+            Entity &player = simulation->get_ent(simulation->get_ent(client->camera).get_player());
+            player.set_voice(state);
+            break;
+        }
+        case Serverbound::kVoiceSignal: {
+            // the server is only the post office of the WebRTC handshake: the voice itself goes
+            // between the two players. Only to a player with the mic open who is close by.
+            if (client->check_invalid(validator.validate_uint32() && validator.validate_string(MAX_VOICE_SIGNAL_LENGTH))) return;
+            uint32_t target_code = reader.read<uint32_t>();
+            std::string payload;
+            reader.read<std::string>(payload);
+            if (!client->alive() || client->voice_tokens == 0) break;
+            --client->voice_tokens;
+            Simulation *simulation = &client->game->simulation;
+            Entity &camera = simulation->get_ent(client->camera);
+            Entity &player = simulation->get_ent(camera.get_player());
+            if (player.get_voice() == VoiceState::kOff) break;
+            EntityID target_id(target_code & 0xffff, (target_code >> 16) & 0xff);
+            if (target_id.id >= ENTITY_CAP || !simulation->ent_alive(target_id)) break;
+            Entity &target = simulation->get_ent(target_id);
+            if (!target.has_component(kFlower) || target.has_component(kMob) || target.id == player.id) break;
+            if (target.get_voice() == VoiceState::kOff) break;
+            float dx = target.get_x() - player.get_x(), dy = target.get_y() - player.get_y();
+            if (dx * dx + dy * dy > VOICE_SIGNAL_RANGE * VOICE_SIGNAL_RANGE) break;
+            if (!simulation->ent_alive(target.get_parent())) break;
+            Entity &target_camera = simulation->get_ent(target.get_parent());
+            if (target_camera.client == nullptr || !target_camera.client->verified) break;
+            Writer writer(Server::OUTGOING_PACKET);
+            writer.write<uint8_t>(Clientbound::kVoiceRelay);
+            writer.write<uint32_t>((uint32_t) player.id.id | ((uint32_t) player.id.hash << 16));
+            writer.write<std::string>(payload);
+            target_camera.client->send_packet(writer.packet, writer.at - writer.packet);
+            break;
+        }
         case Serverbound::kProgressSave: {
             if (!client->alive()) break;
             if (client->account_uuid.empty()) break;

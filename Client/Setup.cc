@@ -95,6 +95,23 @@ extern "C" {
         Input::touches.clear();
     }
 
+    // from the voice chat script (DOM.cc): a piece of the handshake for a player, the
+    // state of the mic (0 off, 1 open, 2 talking), a line for the notice
+    void voice_signal(uint32_t to, char *text) {
+        Game::send_voice_signal(to, std::string(text));
+        free(text);
+    }
+
+    void voice_state(uint8_t state) {
+        Game::voice_wanted = state;
+        Game::send_voice_state(state);
+    }
+
+    void voice_notice(char *text) {
+        Game::show_notice(std::string(text));
+        free(text);
+    }
+
     void loop(double d, float width, float height) {
         Game::renderer.width = width;
         Game::renderer.height = height;

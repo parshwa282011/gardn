@@ -8,7 +8,8 @@
 
 
 enum Clientbound {
-    kClientUpdate
+    kClientUpdate,
+    kVoiceRelay
 };
 
 enum Serverbound {
@@ -20,7 +21,11 @@ enum Serverbound {
     kChatSend,
     kGamemodeSwitch,
     kProgressSave,
-    kDevCommand
+    kDevCommand,
+    // proximity voice chat: uint8 0 off / 1 mic open / 2 talking
+    kVoiceState,
+    // a piece of the WebRTC handshake for a nearby player (uint32 flower, string)
+    kVoiceSignal
 };
 
 // subcommands of Serverbound::kDevCommand: the developer menu, only accepted from

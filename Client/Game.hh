@@ -79,6 +79,8 @@ namespace Game {
     extern std::string dev_search_text;
     // the squad code typed in the squads tab of the dev menu
     extern std::string dev_squad_text;
+    // proximity voice chat: what the player asked for (VoiceState: off, mic open, talking)
+    extern uint8_t voice_wanted;
 
     extern uint8_t show_chat;
     extern std::string chat_text;
@@ -119,6 +121,8 @@ namespace Game {
     void send_dev_squad_create();
     void send_dev_squad_join(std::string const &);
     void send_dev_squad_leave();
+    void send_voice_state(uint8_t);
+    void send_voice_signal(uint32_t, std::string const &);
     void on_message(uint8_t *, uint32_t);
     void poll_ui_event(Ui::ScreenEvent const &);
 };

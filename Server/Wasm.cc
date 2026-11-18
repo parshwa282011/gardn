@@ -227,7 +227,21 @@ void Server::init() {
 
 void Server::run() {
     EM_ASM({
-        Module.tickInterval = setInterval(_tick, $0);
+        const period = $0;
+        let next = performance.now() + period;
+        const loop = function() {
+            let now = performance.now();
+            let ran = 0;
+            while (now >= next && ran < 2) {
+                _tick();
+                next += period;
+                ++ran;
+                now = performance.now();
+            }
+            if (now - next > 5 * period) next = now + period;
+            Module.tickTimer = setTimeout(loop, Math.max(0, next - now));
+        };
+        Module.tickTimer = setTimeout(loop, period);
     }, 1000 / TPS);
 }
 
@@ -241,7 +255,7 @@ void Server::stop() {
             const ws = Module.ws_connections[ws_id];
             ws.close(1001, "Shutting Down");
         }
-        clearInterval(Module.tickInterval);
+        clearTimeout(Module.tickTimer);
     });
 }
 

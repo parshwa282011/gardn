@@ -46,6 +46,7 @@ set(SRCS
     Ui/InGame/Mobile.cc
     Ui/InGame/OverlevelTimer.cc
     Ui/InGame/Sandbox.cc
+    Ui/InGame/Voice.cc
     Ui/InGame/Tooltip.cc
     Ui/TitleScreen/Changelog.cc
     Ui/TitleScreen/DeathScreen.cc
@@ -104,7 +105,7 @@ else()
 endif()
 
 add_link_options(-sNO_EXIT_RUNTIME -sEXPORTED_RUNTIME_METHODS=stringToNewUTF8)
-add_link_options(-sEXPORTED_FUNCTIONS=_main,_key_event,_mouse_event,_touch_event,_wheel_event,_clipboard_event,_blur_event,_loop,_on_message)
+add_link_options(-sEXPORTED_FUNCTIONS=_main,_key_event,_mouse_event,_touch_event,_wheel_event,_clipboard_event,_blur_event,_loop,_on_message,_voice_signal,_voice_state,_voice_notice)
 
 add_executable(gardn-client ${SRCS})
 set(CMAKE_EXECUTABLE_SUFFIX ".js")

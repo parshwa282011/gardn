@@ -75,6 +75,7 @@ namespace Game {
     std::string dev_score_text;
     std::string dev_search_text;
     std::string dev_squad_text;
+    uint8_t voice_wanted = 0;
 
     uint64_t recovery_id = 0;
     uint8_t is_outdated = 0;
@@ -90,6 +91,7 @@ using namespace Game;
 
 void Game::init() {
     Input::is_mobile = check_mobile();
+    DOM::voice_init();
     DOM::cache_client();
     Storage::retrieve();
     reset();
@@ -168,6 +170,9 @@ void Game::init() {
     );
     game_ui_window.add_child(
         Ui::make_stab_timer()
+    );
+    game_ui_window.add_child(
+        Ui::make_voice_button()
     );
     game_ui_window.add_child(
         Ui::make_stat_screen()
@@ -574,6 +579,35 @@ void Game::tick(double time) {
         if (Input::keys_held_this_tick.contains('L')) {
             hold_defense ^= 1;
             Game::show_notice(hold_defense ? "Auto defend on. Press L to turn it off." : "Auto defend off.");
+        }
+    }
+    // proximity voice: V turns the mic on and off; every tenth of a second the script is told
+    // who has the mic open around and how far they are (it connects, or drops, and sets the
+    // volumes), and the server is told again when it forgot the state (a new flower)
+    {
+        static double next_voice_update = 0, next_voice_sync = 0;
+        if (Input::keys_held_this_tick.contains('V') && Game::alive() && !show_chat && !dev_typing && !DOM::text_input_focused())
+            DOM::voice_toggle();
+        if (timestamp >= next_voice_update) {
+            next_voice_update = timestamp + 100;
+            std::string peers;
+            uint32_t mine = 0;
+            if (Game::alive()) {
+                Entity const &me = simulation.get_ent(player_id);
+                mine = (uint32_t) me.id.id | ((uint32_t) me.id.hash << 16);
+                if (me.get_voice() != voice_wanted && timestamp >= next_voice_sync) {
+                    next_voice_sync = timestamp + 500;
+                    send_voice_state(voice_wanted);
+                }
+                simulation.for_each<kFlower>([&](Simulation *, Entity const &ent) {
+                    if (ent.has_component(kMob) || ent.id == me.id || ent.get_voice() == VoiceState::kOff) return;
+                    float dx = ent.get_x() - me.get_x(), dy = ent.get_y() - me.get_y();
+                    uint32_t code = (uint32_t) ent.id.id | ((uint32_t) ent.id.hash << 16);
+                    if (!peers.empty()) peers.push_back(',');
+                    peers += std::to_string(code) + ":" + std::to_string((int) std::sqrt(dx * dx + dy * dy)) + ":" + std::to_string(ent.get_voice() == VoiceState::kTalking);
+                });
+            }
+            DOM::voice_update(mine, peers);
         }
     }
     // the developer menu (\ opens and closes it, ESC closes it): only in the sandbox, for

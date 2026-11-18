@@ -20,6 +20,13 @@ namespace DOM {
     // The best scores of gardn (the master's /leaderboard, the same numbers as the leaderboard
     // page). fetch_high_scores asks in the background; retrieve_high_scores gives what the
     // last answer had, one line per player ("1. name - score"), empty before there is one
+    // Proximity voice chat (the script is in index.html, window.gardnVoice): voice_init links it
+    // to the game, voice_toggle turns the mic on / off, voice_update gives it who is around
+    // ("code:distance:talking,...") and voice_signal_in a piece of a handshake
+    void voice_init();
+    void voice_toggle();
+    void voice_update(uint32_t, std::string const &);
+    void voice_signal_in(uint32_t, std::string const &);
     void fetch_high_scores();
     std::string retrieve_high_scores();
 }

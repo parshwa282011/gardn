@@ -86,6 +86,26 @@ namespace SquadResult {
     };
 }
 
+// Proximity voice chat. Players who turned their mic on hear each other by WebRTC (the server
+// only passes the handshake along), louder the closer they are: full volume inside
+// VOICE_NEAR, silent at VOICE_FAR. A connection is made inside VOICE_CONNECT and dropped
+// outside VOICE_DROP (a bit more, so it does not flap at the edge).
+inline float const VOICE_NEAR = 250;
+inline float const VOICE_FAR = 1200;
+inline float const VOICE_CONNECT = 1500;
+inline float const VOICE_DROP = 1900;
+// handshake messages are small pieces (the client cuts the SDP up) and the server only
+// relays them between flowers this close to each other
+inline uint32_t const MAX_VOICE_SIGNAL_LENGTH = 500;
+inline float const VOICE_SIGNAL_RANGE = 2500;
+namespace VoiceState {
+    enum : uint8_t {
+        kOff,
+        kMicOpen,
+        kTalking
+    };
+}
+
 // the shells of the Tank mob explode where they hit (a flower, a mob or a wall): everything
 // of another team inside the circle takes this much, once
 inline float const TANK_EXPLOSION_RADIUS = 90;

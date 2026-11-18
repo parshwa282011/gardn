@@ -1447,7 +1447,7 @@ std::array<struct MobData, MobID::kNumMobs> const MOB_DATA = {{
     },
     {
         .name = "Tank",
-        .description = "It never moves, it never misses a shot. The shells explode.",
+        .description = "It hunts like a hornet and never misses a shot. The shells explode.",
         .rarity = RarityID::kLegendary,
         .health = {1000.0},
         .damage = 50.0,

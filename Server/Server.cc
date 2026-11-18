@@ -35,6 +35,31 @@ void Server::tick() {
     std::chrono::duration<double, std::milli> tick_time = end - start;
     if (tick_time > 1000ms / TPS) std::cout << "tick took " << tick_time << '\n';
 
+    // One line every 5 minutes: how long the ticks took (the work), and how far apart
+    // they started (the work plus what the machine did in between). A tick is "over" when it
+    // took more than the 50 ms it has; a "gap" is a start more than 75 ms after the last
+    static auto last_start = start;
+    static uint32_t stat_ticks = 0, stat_over = 0, stat_gaps = 0;
+    static double stat_sum = 0, stat_max = 0;
+    static auto stat_since = start;
+    std::chrono::duration<double, std::milli> gap = start - last_start;
+    last_start = start;
+    ++stat_ticks;
+    stat_sum += tick_time.count();
+    if (tick_time.count() > stat_max) stat_max = tick_time.count();
+    if (tick_time > 1000ms / TPS) ++stat_over;
+    if (stat_ticks > 1 && gap > 1500ms / TPS) ++stat_gaps;
+    if (stat_ticks >= 300 * TPS) {
+        std::chrono::duration<double> span = end - stat_since;
+        std::cout << "tick stats: " << stat_ticks << " ticks, avg " << stat_sum / stat_ticks
+            << " ms, max " << stat_max << " ms, over 50 ms: " << stat_over
+            << ", late starts: " << stat_gaps << ", " << stat_ticks / span.count()
+            << " ticks/s, players " << Server::player_count << '\n';
+        stat_ticks = stat_over = stat_gaps = 0;
+        stat_sum = stat_max = 0;
+        stat_since = end;
+    }
+
     // the crash backup: who is in the world, every 30 seconds. Nothing is sent while
     // nobody is in (a standby has no players: it must not wipe the primary's backups
     // that were copied to it), except the one list that says the last player left

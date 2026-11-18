@@ -83,6 +83,208 @@
         })();
     </script>
     <script>
+        // Proximity voice chat. The game (Client/DOM.cc) tells this script every tenth of a second
+        // who has the mic open around the player and how far they are, and passes along the
+        // handshake pieces the server relays. The voice itself goes straight between the two
+        // players (WebRTC); the server only carries the handshake, in small pieces.
+        // Note: a WebRTC connection shows each player's address to the other, which is why the mic
+        // is off until the player turns it on (V).
+        window.gardnVoice = (() => {
+            const NEAR = 250, FAR = 1200, CONNECT = 1500, DROP = 1900;
+            const CHUNK = 300;                // characters of a handshake piece (base64)
+            const GIVE_UP_MS = 15000;         // a connection that is not up by then is dropped
+            const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+            let stream = null, enabled = false, mine = 0, sentState = 0, talking = false;
+            let audioCtx = null, meterTimer = 0, quietSince = 0;
+            let nextMsg = 1;
+            const peers = new Map();          // flower code -> { pc, audio, ice, ready, dist, born }
+            const partial = new Map();        // "from.msg" -> { n, parts, got }
+            const bridge = () => window.gardnVoiceBridge;
+            const notice = (t) => { const b = bridge(); if (b) b.notice(t); };
+            const setState = (v) => { if (v === sentState) return; sentState = v; const b = bridge(); if (b) b.state(v); };
+
+            function send(to, obj) {
+                const b = bridge(); if (!b) return;
+                const text = btoa(JSON.stringify(obj));
+                const m = (nextMsg++) & 0xffff, n = Math.ceil(text.length / CHUNK);
+                for (let i = 0; i < n; i++) b.signal(to, m + "." + i + "." + n + "." + text.slice(i * CHUNK, (i + 1) * CHUNK));
+            }
+
+            function volumeFor(d) {
+                if (d <= NEAR) return 1;
+                if (d >= FAR) return 0;
+                const k = (FAR - d) / (FAR - NEAR);
+                return k * k;
+            }
+
+            function closePeer(code) {
+                const p = peers.get(code); if (!p) return;
+                peers.delete(code);
+                try { p.pc.close(); } catch (e) {}
+                if (p.audio) { p.audio.pause(); p.audio.srcObject = null; }
+            }
+
+            function makePeer(code) {
+                const pc = new RTCPeerConnection(ICE);
+                const p = { pc: pc, audio: null, ice: [], ready: false, dist: 99999, born: Date.now() };
+                peers.set(code, p);
+                if (stream) stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+                pc.onicecandidate = (e) => { if (e.candidate) send(code, { t: "ice", c: e.candidate.toJSON() }); };
+                pc.ontrack = (e) => {
+                    if (!p.audio) { p.audio = new Audio(); p.audio.autoplay = true; }
+                    p.audio.srcObject = e.streams[0];
+                    p.audio.volume = volumeFor(p.dist);
+                    p.audio.play().catch(() => {});
+                };
+                pc.onconnectionstatechange = () => {
+                    if (pc.connectionState === "failed" || pc.connectionState === "closed") closePeer(code);
+                };
+                return p;
+            }
+
+            function flushIce(p) {
+                p.ready = true;
+                for (const c of p.ice) p.pc.addIceCandidate(c).catch(() => {});
+                p.ice = [];
+            }
+
+            function handle(from, msg) {
+                if (!enabled) return;
+                if (msg.t === "offer") {
+                    closePeer(from);                       // a new offer replaces an old connection
+                    const p = makePeer(from);
+                    p.pc.setRemoteDescription({ type: "offer", sdp: msg.s })
+                        .then(() => { flushIce(p); return p.pc.createAnswer(); })
+                        .then((a) => p.pc.setLocalDescription(a))
+                        .then(() => send(from, { t: "answer", s: p.pc.localDescription.sdp }))
+                        .catch(() => closePeer(from));
+                } else if (msg.t === "answer") {
+                    const p = peers.get(from); if (!p) return;
+                    p.pc.setRemoteDescription({ type: "answer", sdp: msg.s }).then(() => flushIce(p)).catch(() => closePeer(from));
+                } else if (msg.t === "ice") {
+                    const p = peers.get(from); if (!p) return;
+                    if (p.ready) p.pc.addIceCandidate(msg.c).catch(() => {}); else p.ice.push(msg.c);
+                }
+            }
+
+            // a piece of a handshake from the server: put the pieces of a message together
+            function signal(from, text) {
+                const a = text.indexOf("."), b = text.indexOf(".", a + 1), c = text.indexOf(".", b + 1);
+                if (a < 0 || b < 0 || c < 0) return;
+                const m = text.slice(0, a), i = +text.slice(a + 1, b), n = +text.slice(b + 1, c);
+                if (!(n > 0 && n <= 40 && i >= 0 && i < n)) return;
+                const key = from + "." + m;
+                let e = partial.get(key);
+                if (!e) { e = { n: n, parts: [], got: 0, at: Date.now() }; partial.set(key, e); }
+                if (e.parts[i] === undefined) { e.parts[i] = text.slice(c + 1); e.got++; }
+                if (e.got < e.n) return;
+                partial.delete(key);
+                try { handle(from, JSON.parse(atob(e.parts.join("")))); } catch (err) {}
+            }
+
+            function connectTo(code) {
+                const p = makePeer(code);
+                p.pc.createOffer({ offerToReceiveAudio: true })
+                    .then((o) => p.pc.setLocalDescription(o))
+                    .then(() => send(code, { t: "offer", s: p.pc.localDescription.sdp }))
+                    .catch(() => closePeer(code));
+            }
+
+            // who is around: "code:distance:talking,..." (only players with the mic open)
+            function update(myCode, list) {
+                mine = myCode;
+                const now = Date.now();
+                for (const [k, e] of partial) if (now - e.at > 20000) partial.delete(k);
+                const seen = new Set();
+                if (enabled && mine !== 0 && list) {
+                    for (const entry of list.split(",")) {
+                        const f = entry.split(":");
+                        const code = +f[0], d = +f[1];
+                        if (!code) continue;
+                        seen.add(code);
+                        let p = peers.get(code);
+                        if (p) p.dist = d;
+                        // the lower code makes the offer, so that two players never both do
+                        if (!p && d <= CONNECT && mine < code) connectTo(code);
+                        p = peers.get(code);
+                        if (p) {
+                            p.dist = d;
+                            if (p.audio) p.audio.volume = volumeFor(d);
+                        }
+                    }
+                }
+                for (const [code, p] of peers) {
+                    const gone = !seen.has(code) || p.dist > DROP;
+                    const stuck = p.pc.connectionState !== "connected" && now - p.born > GIVE_UP_MS;
+                    if (gone || stuck) closePeer(code);
+                }
+            }
+
+            // talking = the level of the mic is above the noise for a moment
+            function startMeter() {
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const src = audioCtx.createMediaStreamSource(stream);
+                    const an = audioCtx.createAnalyser();
+                    an.fftSize = 512;
+                    src.connect(an);
+                    const buf = new Uint8Array(an.fftSize);
+                    meterTimer = setInterval(() => {
+                        an.getByteTimeDomainData(buf);
+                        let peak = 0;
+                        for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128));
+                        const now = Date.now();
+                        if (peak > 12) { quietSince = 0; talking = true; }
+                        else if (talking) { if (!quietSince) quietSince = now; else if (now - quietSince > 600) talking = false; }
+                        if (enabled) setState(talking ? 2 : 1);
+                    }, 100);
+                } catch (e) {}
+            }
+
+            function disable() {
+                enabled = false; talking = false;
+                clearInterval(meterTimer); meterTimer = 0;
+                if (audioCtx) { try { audioCtx.close(); } catch (e) {} audioCtx = null; }
+                if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
+                for (const code of Array.from(peers.keys())) closePeer(code);
+                setState(0);
+            }
+
+            function enable() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    notice("Voice chat needs a secure page (https) and a microphone");
+                    return;
+                }
+                navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false })
+                    .then((s) => {
+                        stream = s; enabled = true;
+                        setState(1);
+                        startMeter();
+                        notice("Voice chat on: players near you with it on can hear you");
+                    })
+                    .catch(() => notice("The microphone is blocked: allow it in the browser to use voice chat"));
+            }
+
+            return {
+                toggle: () => { if (enabled) { disable(); notice("Voice chat off"); } else enable(); },
+                update: update,
+                signal: signal,
+                // for tests: [code, connection state, volume]
+                // for tests: bytes of audio received from each peer so far
+                stats: async () => {
+                    const out = [];
+                    for (const [c, p] of peers) {
+                        let bytes = 0;
+                        (await p.pc.getStats()).forEach((r) => { if (r.type === "inbound-rtp" && r.kind === "audio") bytes += r.bytesReceived; });
+                        out.push([c, bytes]);
+                    }
+                    return out;
+                },
+                debug: () => ({ enabled: enabled, mine: mine, peers: Array.from(peers, ([c, p]) => [c, p.pc.connectionState, p.audio ? p.audio.volume : -1, Math.round(p.dist)]) })
+            };
+        })();
+    </script>
+    <script>
         // The names here are global in the page, and so are the names of the minified
         // gardn-client.js that is loaded next: a plain "v" here clashed with its own
         // top level "v" ("Identifier 'v' has already been declared"), the script never ran

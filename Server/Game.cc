@@ -112,8 +112,10 @@ void GameInstance::tick() {
         squad_cleanup();
     if (gamemode == Gamemode::kTDM)
         team_manager.tick();
-    for (Client *client : clients)
+    for (Client *client : clients) {
+        if (client != nullptr && client->voice_tokens < 60) client->voice_tokens += 3;
         _update_client(&simulation, client);
+    }
     simulation.post_tick();
 }
 

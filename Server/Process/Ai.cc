@@ -162,20 +162,25 @@ static void tick_bumblebee(Simulation *sim, Entity &ent, float speed) {
     ent.acceleration *= 2;
 }
 
-// The Tank never moves: it turns to the nearest enemy in reach and shoots a shell that
-// explodes where it lands (like a hornet that cannot move)
+// The Tank moves like a hornet: it wanders while nobody is around, closes in on the nearest
+// enemy in reach until it is 300 away, and shoots a shell every 1.5 s that explodes where it
+// lands
 static void tick_tank(Simulation *sim, Entity &ent) {
-    ent.acceleration.set(0, 0);
     if (sim->ent_alive(ent.target)) {
         Entity &target = sim->get_ent(ent.target);
         Vector v(target.get_x() - ent.get_x(), target.get_y() - ent.get_y());
         _focus_lose_clause(ent, v);
         float dist = v.magnitude();
+        if (dist > 300) {
+            v.set_magnitude(PLAYER_ACCELERATION * 0.975);
+            ent.acceleration = v;
+        } else {
+            ent.acceleration.set(0, 0);
+        }
         ent.set_angle(v.angle());
         ++ent.ai_shooting_tick;
         if (ent.ai_shooting_tick >= 1.5 * TPS && dist < 1000) {
             ent.ai_shooting_tick = 0;
-            // (a bit in front of the barrel)
             Entity &shell = alloc_petal(sim, PetalID::kMissile, ent);
             shell.set_petal_flags(shell.get_petal_flags() | (1 << PetalFlags::kTankShell));
             shell.set_radius(12);
@@ -184,22 +189,26 @@ static void tick_tank(Simulation *sim, Entity &ent) {
             shell.health = shell.max_health = 10;
             entity_set_despawn_tick(shell, 3 * TPS);
             shell.set_angle(ent.get_angle());
+            // (a bit in front of the barrel)
             Vector muzzle;
             muzzle.unit_normal(ent.get_angle()).set_magnitude(ent.get_radius() + 30);
             shell.set_x(ent.get_x() + muzzle.x);
             shell.set_y(ent.get_y() + muzzle.y);
             shell.acceleration.unit_normal(ent.get_angle()).set_magnitude(40 * PLAYER_ACCELERATION);
+            Vector kb;
+            kb.unit_normal(ent.get_angle() - M_PI).set_magnitude(2.5 * PLAYER_ACCELERATION);
+            ent.velocity += kb;
         }
         return;
     }
     if (!(ent.target == NULL_ENTITY)) {
-        ent.target = NULL_ENTITY;
+        ent.ai_state = AIState::kIdle;
         ent.ai_tick = 0;
+        ent.target = NULL_ENTITY;
     }
     if (ent.ai_shooting_tick > 0) --ent.ai_shooting_tick;
     ent.target = find_nearest_enemy(sim, ent, ent.detection_radius);
-    // looking around while nobody is there
-    ent.set_angle(ent.get_angle() + 0.4f / TPS);
+    tick_bee_passive(sim, ent);
 }
 
 static void tick_hornet_aggro(Simulation *sim, Entity &ent) {

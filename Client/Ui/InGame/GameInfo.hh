@@ -57,6 +57,8 @@ namespace Ui {
 
     // the countdown of devStabOSC, on the screen of the player it hit
     Element *make_stab_timer();
+    // the mic of the proximity voice chat
+    Element *make_voice_button();
     Element *make_leaderboard();
     // what the colors of the observer's dots mean, shown under the leaderboard while ' is held
     Element *make_color_legend();
