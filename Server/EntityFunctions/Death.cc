@@ -90,20 +90,41 @@ void entity_on_death(Simulation *sim, Entity const &ent) {
             StaticArray<float, MAX_DROPS_PER_MOB> const &drop_chances = MOB_DROP_CHANCES[ent.get_mob_id()];
             // the drop luck of the biome it dies in
             float drop_mult = Map::drop_multiplier(Map::drop_luck_at(sim, ent.get_x(), ent.get_y()));
+            // a boss: every chance is BOSS_DROP_CHANCE_MULTIPLIER times as big (the drops are the ones of
+            // the mob it is), and one drop of Legendary or better is certain: one of the mob's own, or
+            // if it has none, any Legendary or Mythic petal
+            bool const boss = ent.get_boss();
+            if (boss) drop_mult *= BOSS_DROP_CHANCE_MULTIPLIER;
             for (uint32_t i = 0; i < mob_data.drops.size(); ++i) 
                 if (frand() < fclamp(drop_chances[i] * drop_mult, 0, 1)) success_drops.push_back(mob_data.drops[i]);
+            if (boss) {
+                bool has_legendary = false;
+                for (PetalID::T id : success_drops)
+                    if (PETAL_DATA[id].rarity >= RarityID::kLegendary) has_legendary = true;
+                if (!has_legendary) {
+                    std::vector<PetalID::T> own, any;
+                    for (uint32_t i = 0; i < mob_data.drops.size(); ++i)
+                        if (PETAL_DATA[mob_data.drops[i]].rarity >= RarityID::kLegendary) own.push_back(mob_data.drops[i]);
+                    for (PetalID::T id = PetalID::kBasic; id < PetalID::kNumPetals; ++id)
+                        if (PETAL_DATA[id].rarity == RarityID::kLegendary || PETAL_DATA[id].rarity == RarityID::kMythic) any.push_back(id);
+                    std::vector<PetalID::T> const &pool = own.empty() ? any : own;
+                    if (!pool.empty()) success_drops.push_back(pool[(uint32_t) (frand() * pool.size()) % pool.size()]);
+                }
+            }
             _alloc_drops(sim, success_drops, ent.get_x(), ent.get_y());
         }
-        if (MOB_DATA[ent.get_mob_id()].attributes.hole && 
-            BitMath::at(ent.flags, EntityFlags::kSpawnedFromZone) && 
-            frand() < DIGGER_SPAWN_CHANCE) { 
+        // a hole always lets a Digger out when it is a boss, and then it is a boss digger (at war with everybody)
+        if (MOB_DATA[ent.get_mob_id()].attributes.hole &&
+            ((BitMath::at(ent.flags, EntityFlags::kSpawnedFromZone) && frand() < DIGGER_SPAWN_CHANCE) ||
+             (ent.get_boss() && !natural_despawn))) { 
             EntityID team = NULL_ENTITY;
             uint8_t dev = 0;
             if (sim->ent_exists(ent.last_damaged_by)) {
                 team = sim->get_ent(ent.last_damaged_by).get_team();
                 dev = sim->get_ent(ent.last_damaged_by).get_dev();
             }
-            alloc_mob(sim, MobID::kDigger, ent.get_x(), ent.get_y(), team).set_dev(dev);
+            if (ent.get_boss()) team = NULL_ENTITY;
+            alloc_mob(sim, MobID::kDigger, ent.get_x(), ent.get_y(), team, nullptr, ent.get_boss() != 0).set_dev(dev);
         }
 
     } else if (ent.has_component(kPetal)) {

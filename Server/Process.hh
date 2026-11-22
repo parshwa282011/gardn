@@ -21,6 +21,8 @@ void apply_stab(Simulation *, Entity &, Entity &);
 // the shells of the Tank mob explode when they hit something or reach a wall
 void tank_shell_hit(Simulation *, Entity &);
 void tick_tank_shell(Simulation *, Entity &);
+// the special ability of a boss mob (Process/Boss.cc), after its normal behavior
+void tick_boss_ability(Simulation *, Entity &);
 void tick_tracking_behavior(Simulation *);
 void tick_segment_behavior(Simulation *, Entity &);
 void tick_score_behavior(Simulation *, Entity &);

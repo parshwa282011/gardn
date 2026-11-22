@@ -407,7 +407,8 @@ static void tick_digger(Simulation *sim, Entity &ent) {
             ent.ai_tick = 0;
             ent.target = NULL_ENTITY;
         }
-        ent.target = find_nearest_enemy(sim, ent, ent.detection_radius + ent.get_radius());
+        ent.target = ent.get_boss() ? find_nearest_anything(sim, ent, ent.detection_radius + ent.get_radius())
+            : find_nearest_enemy(sim, ent, ent.detection_radius + ent.get_radius());
         switch(ent.ai_state) {
             case AIState::kIdle: {
                 ent.set_angle(frand() * M_PI * 2);
@@ -510,11 +511,14 @@ void tick_ai_behavior(Simulation *sim, Entity &ent) {
                 Vector behind;
                 behind.unit_normal(ent.get_angle() + M_PI);
                 behind *= ent.get_radius();
+                // (the soldiers of a boss queen, or of a queen a boss made, pay nothing)
+                bool const no_pay = ent.get_boss() || BitMath::at(ent.flags, EntityFlags::kNoDrops);
                 Entity &spawned = alloc_mob(
                     sim, MobID::kSoldierAnt, ent.get_x() + behind.x, ent.get_y() + behind.y, 
-                    ent.get_team(), [](Entity &mob) {
-                    mob.score_reward = MOB_DATA[mob.get_mob_id()].xp;
+                    ent.get_team(), [no_pay](Entity &mob) {
+                    mob.score_reward = no_pay ? 0 : MOB_DATA[mob.get_mob_id()].xp;
                     BitMath::set(mob.flags, EntityFlags::kHasCulling);
+                    if (no_pay) BitMath::set(mob.flags, EntityFlags::kNoDrops);
                 });
                 entity_set_despawn_tick(spawned, 10 * TPS);
                 spawned.set_parent(ent.get_parent());
@@ -546,12 +550,14 @@ void tick_ai_behavior(Simulation *sim, Entity &ent) {
             if (!ent.activated) break;
             if (ent.pending_spawn_count > 0) {
                 Vector rand = Vector::rand(frand() * ent.get_radius());
+                // (a boss burrow: boss fire ants, which drop like any boss)
+                bool const boss_burrow = ent.get_boss() != 0;
                 Entity &child = alloc_mob(
                     sim, MobID::kFireAnt, ent.get_x() + rand.x, ent.get_y() + rand.y,
-                    ent.get_team(), [](Entity &mob) {
+                    ent.get_team(), [boss_burrow](Entity &mob) {
                     mob.score_reward = MOB_DATA[mob.get_mob_id()].xp;
                     BitMath::set(mob.flags, EntityFlags::kHasCulling);
-                });
+                }, boss_burrow);
                 child.target = ent.target;
                 --ent.pending_spawn_count;
             } else sim->request_delete(ent.id);
@@ -559,6 +565,8 @@ void tick_ai_behavior(Simulation *sim, Entity &ent) {
         default:
             break;
     }
+    // a boss has an ability on top of what its kind does
+    if (ent.get_boss()) tick_boss_ability(sim, ent);
     //wall avoidance
     if (!sim->ent_alive(ent.target)) {
         if (ent.get_x() - ent.get_radius() <= 0 && angle_within(ent.get_angle(), M_PI, M_PI / 2))

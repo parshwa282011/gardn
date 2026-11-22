@@ -30,9 +30,53 @@ Entity &alloc_drop(Simulation *sim, PetalID::T drop_id) {
     return drop;
 }
 
+bool mob_can_be_boss(MobID::T id) {
+    return id < MobID::kNumMobs;
+}
+
+bool mob_is_natural_boss(MobID::T id) {
+    switch (id) {
+        case MobID::kRock: case MobID::kBoulder: case MobID::kMountain: case MobID::kCactus:
+        case MobID::kSquare: case MobID::kAntHole: case MobID::kAntBurrow: case MobID::kDigger:
+            return false;
+        default:
+            return !MOB_DATA[id].attributes.stationary && MOB_DATA[id].rarity != RarityID::kUnique;
+    }
+}
+
+uint32_t count_bosses(Simulation *sim) {
+    uint32_t n = 0;
+    sim->for_each<kMob>([&](Simulation *, Entity &mob) {
+        if (mob.get_boss() && !mob.pending_delete && !mob.has_component(kSegmented)) ++n;
+    });
+    return n;
+}
+
+// The boss tag: BOSS_HEALTH_MULTIPLIER times the health, BOSS_DAMAGE_MULTIPLIER times the damage
+// and BOSS_SIZE_MULTIPLIER times the size (and mass and reach). Its special ability is in Process/Boss.cc.
+static void make_boss(Entity &mob) {
+    MobID::T id = mob.get_mob_id();
+    mob.set_boss(1);
+    mob.set_radius(mob.get_radius() * BOSS_SIZE_MULTIPLIER);
+    mob.boss_base_radius = mob.get_radius();
+    mob.mass *= BOSS_SIZE_MULTIPLIER;
+    float health_multiplier = id == MobID::kShinyLadybug ? BOSS_SHINY_HEALTH_MULTIPLIER : BOSS_HEALTH_MULTIPLIER;
+    mob.health = mob.max_health = mob.max_health * health_multiplier;
+    mob.boss_life_health = mob.max_health;
+    mob.boss_reload_ticks = 0;
+    mob.set_boss_reload(255);
+    mob.damage *= BOSS_DAMAGE_MULTIPLIER;
+    mob.detection_radius = mob.detection_radius * 1.5 + mob.get_radius();
+    // the Fire Ant boss gives back 5% of every hit it takes
+    if (id == MobID::kFireAnt) mob.damage_reflection += 0.05;
+    // (the name above it says what it is)
+    mob.set_nametag_visible(1);
+    mob.set_name(std::string("BOSS ") + MOB_DATA[id].name);
+}
+
 static Entity &__alloc_mob(
     Simulation *sim, MobID::T mob_id, float x, float y, 
-    EntityID const team, std::function<void(Entity &)> on_spawn
+    EntityID const team, std::function<void(Entity &)> on_spawn, bool boss = false
 ) {
     DEBUG_ONLY(assert(mob_id < MobID::kNumMobs);)
     struct MobData const &data = MOB_DATA[mob_id];
@@ -69,6 +113,7 @@ static Entity &__alloc_mob(
     mob.set_name(data.name);
 
     mob.base_entity = mob.id;
+    if (boss) make_boss(mob);
     if (mob_id == MobID::kDigger) {
         mob.add_component(kFlower);
         mob.set_angle(0);
@@ -76,16 +121,19 @@ static Entity &__alloc_mob(
     }
     if (on_spawn) 
         on_spawn(mob);
+    // (after on_spawn, which sets the score)
+    if (boss) mob.score_reward *= BOSS_SCORE_MULTIPLIER;
     return mob;
 }
 
 Entity &alloc_mob(
     Simulation *sim, MobID::T mob_id, float x, float y, 
-    EntityID const team, std::function<void(Entity &)> on_spawn
+    EntityID const team, std::function<void(Entity &)> on_spawn, bool boss
 ) {
     struct MobData const &data = MOB_DATA[mob_id];
+    if (boss && !mob_can_be_boss(mob_id)) boss = false;
     if (data.attributes.segments <= 1) {
-        Entity &ent = __alloc_mob(sim, mob_id, x, y, team, on_spawn);
+        Entity &ent = __alloc_mob(sim, mob_id, x, y, team, on_spawn, boss);
         if (mob_id == MobID::kAntHole) {
             std::vector<MobID::T> const spawns = { 
                 MobID::kBabyAnt, MobID::kBabyAnt, MobID::kBabyAnt, 
@@ -93,20 +141,21 @@ Entity &alloc_mob(
             };
             for (MobID::T mob_id : spawns) {
                 Vector rand = Vector::rand(ent.get_radius() * 2);
-                Entity &ant = __alloc_mob(sim, mob_id, x + rand.x, y + rand.y, team, on_spawn);
+                // (a boss hole lets boss versions out, which drop like any boss)
+                Entity &ant = __alloc_mob(sim, mob_id, x + rand.x, y + rand.y, team, on_spawn, boss);
                 ant.set_parent(ent.id);
             }
         }
         return ent;
     }
     else {
-        Entity &head = __alloc_mob(sim, mob_id, x, y, team, on_spawn);
+        Entity &head = __alloc_mob(sim, mob_id, x, y, team, on_spawn, boss);
         //head.add_component(kSegmented);
         Entity *curr = &head;
         uint32_t count = data.attributes.segments;
         if (frand() < 0.001) count *= 5;
         for (uint32_t i = 1; i < count; ++i) {
-            Entity &seg = __alloc_mob(sim, mob_id, x, y, team, on_spawn);
+            Entity &seg = __alloc_mob(sim, mob_id, x, y, team, on_spawn, boss);
             seg.add_component(kSegmented);
             seg.set_seg_head(curr->id);
             seg.set_angle(curr->get_angle() + frand() * 0.1 - 0.05);
@@ -118,7 +167,7 @@ Entity &alloc_mob(
     }
 }
 
-Entity &summon_mob_near(Simulation *sim, Entity const &player, MobID::T mob_id) {
+Entity &summon_mob_near(Simulation *sim, Entity const &player, MobID::T mob_id, bool boss) {
     float const distance = 600;
     float const margin = 200;
     float const angle = frand() * 2 * M_PI;
@@ -131,7 +180,7 @@ Entity &summon_mob_near(Simulation *sim, Entity const &player, MobID::T mob_id) 
         mob.immunity_ticks = TPS;
         BitMath::set(mob.flags, EntityFlags::kHasCulling);
         mob.score_reward = MOB_DATA[mob.get_mob_id()].xp;
-    });
+    }, boss);
 }
 
 Entity &alloc_player(Simulation *sim, EntityID const team) {

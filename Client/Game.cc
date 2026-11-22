@@ -71,6 +71,7 @@ namespace Game {
 
     uint8_t show_dev_menu = 0;
     uint8_t dev_tab = 0;
+    uint8_t dev_boss_spawn = 0;
     std::string dev_level_text;
     std::string dev_score_text;
     std::string dev_search_text;

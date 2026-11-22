@@ -16,6 +16,8 @@ void inflict_sheild(Simulation *, Entity &, float);
 void entity_on_death(Simulation *, Entity const &);
 
 EntityID find_nearest_enemy(Simulation *, Entity const &, float);
+// the nearest mob or flower of any team, itself left out (the Digger boss does not care who it hits)
+EntityID find_nearest_anything(Simulation *, Entity const &, float);
 EntityID find_nearest_enemy_within_angle(Simulation *, Entity const &, float, float);
 EntityID find_nearest_enemy_to_strike(Simulation *, Entity const &, Entity const &, float, std::function<bool(Entity const &)>);
 std::vector<EntityID> find_enemies_to_radiate(Simulation *, Entity const &, float);

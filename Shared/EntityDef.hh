@@ -96,7 +96,9 @@ SINGLE(Health, damaged, StickyFlag) \
 SINGLE(Health, revived, StickyFlag)
 
 #define FIELDS_Mob \
-SINGLE(Mob, mob_id, MobID::T)
+SINGLE(Mob, mob_id, MobID::T) \
+SINGLE(Mob, boss, uint8_t) \
+SINGLE(Mob, boss_reload, uint8_t)
 
 #define FIELDS_Drop \
 SINGLE(Drop, drop_id, PetalID::T) \
@@ -165,6 +167,13 @@ MULTIPLE(Progress, saved_loadout, PetalID::T, 2 * MAX_SLOT_COUNT)
     SINGLE(secondary_reload, game_tick_t, =0) \
     SINGLE(ai_tick, game_tick_t, =0) \
     SINGLE(ai_shooting_tick, game_tick_t, =0) \
+    SINGLE(boss_tick, game_tick_t, =0) \
+    SINGLE(boss_charge_ticks, game_tick_t, =0) \
+    SINGLE(boss_charge_angle, float, =0) \
+    SINGLE(boss_reload_ticks, game_tick_t, =0) \
+    SINGLE(boss_life_health, float, =0) \
+    SINGLE(boss_base_radius, float, =0) \
+    SINGLE(boss_history, BossHistory, ={}) \
     \
     SINGLE(poison_inflicted, float, =0) \
     SINGLE(poison_dealer, EntityID, =NULL_ENTITY) \
@@ -233,6 +242,17 @@ inline const EntityID NULL_ENTITY;
 
 #ifdef SERVER_ONLY
 class Simulation;
+
+// the last positions of the player a boss runs after (one per tick: 20 of them are a second):
+// the beetles use them to guess where the player is going (Process/Boss.cc)
+struct BossHistory {
+    static constexpr uint32_t kLength = 20;
+    float x[kLength];
+    float y[kLength];
+    uint8_t count;
+    uint8_t head;
+    EntityID of;
+};
 
 struct LoadoutPetal {
     EntityID ent_id;

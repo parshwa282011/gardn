@@ -118,7 +118,7 @@ void DevMobRow::on_render(Renderer &ctx) {
 }
 
 void DevMobRow::on_event(uint8_t event) {
-    if (event == kClick) Game::send_dev_spawn_mob(id);
+    if (event == kClick) Game::send_dev_spawn_mob(id, Game::dev_boss_spawn != 0);
 }
 
 // the list of the tab: sorted by rarity, then by name. Unique petals and mobs are left
@@ -252,6 +252,13 @@ Element *Ui::make_dev_menu() {
             .line_width = 3, .round_radius = 3,
             .should_render = [](){ return Game::dev_tab != 2; }
         }),
+        new Ui::Button(206, 28,
+            new Ui::DynamicText(14, [](){ return std::string{Game::dev_boss_spawn ? "Spawn as BOSS: on" : "Spawn as BOSS: off"}; }),
+            [](Element *, uint8_t e){ if (e == Ui::kClick) Game::dev_boss_spawn = !Game::dev_boss_spawn; },
+            [](){ return Game::dev_boss_spawn != 0; },
+            { .fill = 0xffd14a3a, .line_width = 3, .round_radius = 3,
+              .should_render = [](){ return Game::dev_tab == 1; } }
+        ),
         make_list(true),
         make_list(false),
         make_squad_panel(),

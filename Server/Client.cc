@@ -394,8 +394,9 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
                     break;
                 }
                 case DevCommandID::kSpawnMob: {
-                    if (client->check_invalid(validator.validate_uint8())) return;
+                    if (client->check_invalid(validator.validate_uint8() && validator.validate_uint8())) return;
                     uint8_t mob_id = reader.read<uint8_t>();
+                    bool boss = reader.read<uint8_t>() != 0;
                     if (client->check_invalid(mob_id < MobID::kNumMobs)) return;
                     if (MOB_DATA[mob_id].rarity == RarityID::kUnique) break; // they drop unique petals
                     // the world has room for a limited number of entities
@@ -405,7 +406,7 @@ void Client::on_message(WebSocket *ws, std::string_view message, uint64_t code) 
                         if (!BitMath::at(mob.flags, EntityFlags::kSpawnedFromZone)) ++mobs;
                     });
                     if (mobs >= 300) break;
-                    summon_mob_near(simulation, player, (MobID::T) mob_id);
+                    summon_mob_near(simulation, player, (MobID::T) mob_id, boss);
                     break;
                 }
                 case DevCommandID::kReloadPetals: {

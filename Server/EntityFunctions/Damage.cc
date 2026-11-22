@@ -93,13 +93,15 @@ void inflict_damage(Simulation *sim, EntityID const atk_id, EntityID const def_i
         if (defender.health <= 0) end = num_waves + 1;
         for (uint32_t i = start; i < end; ++i) {
             for (MobID::T mob_id : ANTHOLE_SPAWNS[i]) {
+                // (a boss hole lets boss versions out, which drop like any boss)
+                bool const boss_hole = defender.get_boss() != 0;
                 Entity &child = alloc_mob(
                     sim, mob_id, 
                     defender.get_x(), defender.get_y(), 
-                    defender.get_team(), [](Entity &mob) {
+                    defender.get_team(), [boss_hole](Entity &mob) {
                     mob.score_reward = MOB_DATA[mob.get_mob_id()].xp;
                     BitMath::set(mob.flags, EntityFlags::kHasCulling);
-                });
+                }, boss_hole);
                 child.set_parent(defender.id);
                 child.target = defender.target;
             }
@@ -125,6 +127,24 @@ void inflict_damage(Simulation *sim, EntityID const atk_id, EntityID const def_i
                 defender.delayed_damage[i] = 0;
         } else if (sim->ent_exists(defender.get_parent()))
             sim->get_ent(defender.get_parent()).set_saving_progress(0);
+    }
+    // the Shiny Ladybug boss has the Yggdrasil: it is revived with half the health of the life before,
+    // then the ability reloads for BOSS_YGG_RELOAD_SECONDS (Process/Boss.cc counts it down). Killed
+    // before it is back, it is dead
+    if (defender.health == 0 && defender.has_component(kMob) && defender.get_boss() &&
+        defender.get_mob_id() == MobID::kShinyLadybug && defender.boss_reload_ticks == 0) {
+        defender.boss_life_health *= BOSS_YGG_HEALTH_RATIO;
+        defender.health = defender.boss_life_health;
+        defender.boss_reload_ticks = BOSS_YGG_RELOAD_SECONDS * TPS;
+        defender.set_boss_reload(0);
+        defender.set_revived(1);
+        defender.poison_ticks = 0;
+        defender.slow_ticks = 0;
+        defender.dandy_ticks = 0;
+        defender.honey_ticks = 0;
+        defender.immunity_ticks = 1.0 * TPS;
+        for (uint32_t i = 0; i < MAX_SPONGE_PERIOD; ++i)
+            defender.delayed_damage[i] = 0;
     }
     if (defender.has_component(kFlower) && type != DamageType::kPassive)
         defender.set_saving_timer(fclamp(defender.get_saving_timer() - 10 * damage_dealt, 0, PROGRESS_SAVE_DELAY * TPS));

@@ -96,6 +96,9 @@ void Map::spawn_random_mob(Simulation *sim, float x, float y) {
     for (SpawnChance const &s : spawns) {
         sum -= s.chance;
         if (sum <= 0) {
+            // now and then it is a boss (not in the sandbox, and not more than MAX_BOSSES in the world)
+            bool boss = sim->arena_info.gamemode != Gamemode::kSandbox && frand() < BOSS_SPAWN_CHANCE &&
+                mob_is_natural_boss(s.id) && count_bosses(sim) < MAX_BOSSES;
             Entity &ent = alloc_mob(sim, s.id, x, y, NULL_ENTITY, [&](Entity &mob){
                 mob.zone = zone_id;
                 mob.immunity_ticks = TPS;
@@ -103,7 +106,7 @@ void Map::spawn_random_mob(Simulation *sim, float x, float y) {
                 BitMath::set(mob.flags, EntityFlags::kHasCulling);
                 sim->zone_mob_counts[zone_id]++;
                 mob.score_reward = MOB_DATA[mob.get_mob_id()].xp;
-            });
+            }, boss);
             return;
         }
     }

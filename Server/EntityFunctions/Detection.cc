@@ -24,6 +24,20 @@ EntityID find_nearest_enemy(Simulation *simulation, Entity const &entity, float 
     return ret;
 }
 
+EntityID find_nearest_anything(Simulation *simulation, Entity const &entity, float radius) {
+    if ((entity.id.id - entity.lifetime) % (TPS / 5) != 0) return NULL_ENTITY;
+    EntityID ret;
+    float min_dist = radius;
+    simulation->spatial_hash.query(entity.get_x(), entity.get_y(), radius, radius, [&](Simulation *sim, Entity &ent){
+        if (!sim->ent_alive(ent.id) || ent.id == entity.id) return;
+        if (ent.immunity_ticks > 0) return;
+        if (!ent.has_component(kMob) && !ent.has_component(kFlower)) return;
+        float dist = Vector(ent.get_x()-entity.get_x(),ent.get_y()-entity.get_y()).magnitude();
+        if (dist < min_dist) { min_dist = dist; ret = ent.id; }
+    });
+    return ret;
+}
+
 EntityID find_nearest_enemy_within_angle(Simulation *simulation, Entity const &entity, float radius, float angle) {
     EntityID ret;
     float min_dist = radius;

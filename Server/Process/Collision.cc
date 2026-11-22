@@ -14,6 +14,10 @@ static bool _no_collision(Entity const &ent) {
     return ent.has_component(kPetal) && PETAL_DATA[ent.get_petal_id()].attributes.no_collision;
 }
 
+static bool _is_digger_boss(Entity const &ent) {
+    return ent.has_component(kMob) && ent.get_boss() && ent.get_mob_id() == MobID::kDigger;
+}
+
 static bool _should_interact(Entity const &ent1, Entity const &ent2) {
     if (ent1.pending_delete || ent2.pending_delete) return false;
     if (_no_collision(ent1) || _no_collision(ent2)) return false;
@@ -125,7 +129,8 @@ void on_collide(Simulation *sim, Entity &ent1, Entity &ent2) {
         _deal_push(ent2, separation*-1, 1 - ratio, dist);
     }
 
-    if (BOTH(kHealth) && !(ent1.get_team() == ent2.get_team())) {
+    // (the Digger boss is at war with everything it touches, whatever the team)
+    if (BOTH(kHealth) && (!(ent1.get_team() == ent2.get_team()) || _is_digger_boss(ent1) || _is_digger_boss(ent2))) {
         if ((ent1.health > 0 || ent1.max_health == 0) && (ent2.health > 0 || ent2.max_health == 0)) {
             inflict_damage(sim, ent1.id, ent2.id, ent1.damage, DamageType::kContact);
             inflict_damage(sim, ent2.id, ent1.id, ent2.damage, DamageType::kContact);

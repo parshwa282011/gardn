@@ -106,6 +106,34 @@ namespace VoiceState {
     };
 }
 
+// Bosses: a mob with the boss tag has BOSS_HEALTH_MULTIPLIER times the health, does
+// BOSS_DAMAGE_MULTIPLIER times the damage and is BOSS_SIZE_MULTIPLIER times as big, and uses the
+// special ability of its kind (Server/Process/Boss.cc). They come now and then by themselves
+// (not more than MAX_BOSSES at the same time in a world) and from the "Boss" switch of the developer menu.
+inline float const BOSS_HEALTH_MULTIPLIER = 10;
+// the Shiny Ladybug boss has the ability of the Yggdrasil: it is revived once, then the ability
+// reloads (shown next to its health bar). It has more health, and every revival gives it half of
+// the health of the one before
+inline float const BOSS_SHINY_HEALTH_MULTIPLIER = 50;
+inline uint32_t const BOSS_YGG_RELOAD_SECONDS = 10;
+inline float const BOSS_YGG_HEALTH_RATIO = 0.5;
+inline float const BOSS_DAMAGE_MULTIPLIER = 2;
+inline float const BOSS_SIZE_MULTIPLIER = 5;
+inline float const BOSS_SPAWN_CHANCE = 0.004;
+inline uint32_t const MAX_BOSSES = 3;
+// what a boss pays out: its score, and the drops of the mob it is: every chance is
+// BOSS_DROP_CHANCE_MULTIPLIER times as big, and there is always one drop of Legendary or better
+// (one of the mob's own, or else any Legendary or Mythic petal)
+inline uint32_t const BOSS_SCORE_MULTIPLIER = 10;
+inline float const BOSS_DROP_CHANCE_MULTIPLIER = 10;
+// the minions of a boss (what it summons) alive at the same time
+inline uint32_t const BOSS_MAX_MINIONS = 6;
+// the Cactus boss swells from 1x to this many times its size and back, in this many seconds
+inline float const BOSS_CACTUS_SWELL = 1.25;
+inline float const BOSS_CACTUS_PERIOD_SECONDS = 12;
+// the Digger boss: all around it, this much damage to every mob and flower once a second
+inline float const BOSS_DIGGER_RADIATION_DAMAGE = 1;
+
 // the shells of the Tank mob explode where they hit (a flower, a mob or a wall): everything
 // of another team inside the circle takes this much, once
 inline float const TANK_EXPLOSION_RADIUS = 90;

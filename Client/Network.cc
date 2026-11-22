@@ -167,7 +167,15 @@ void Game::send_dev_set_level(uint32_t level) { send_dev(DevCommandID::kSetLevel
 void Game::send_dev_set_score(uint32_t score) { send_dev(DevCommandID::kSetScore, score, true, true); }
 void Game::send_dev_give_petal(uint8_t id) { send_dev(DevCommandID::kGivePetal, id, true); }
 void Game::send_dev_toggle_invincible() { send_dev(DevCommandID::kToggleInvincible, 0, false); }
-void Game::send_dev_spawn_mob(uint8_t id) { send_dev(DevCommandID::kSpawnMob, id, true); }
+void Game::send_dev_spawn_mob(uint8_t id, bool boss) {
+    if (!Game::alive()) return;
+    Writer writer(static_cast<uint8_t *>(OUTGOING_PACKET));
+    writer.write<uint8_t>(Serverbound::kDevCommand);
+    writer.write<uint8_t>(DevCommandID::kSpawnMob);
+    writer.write<uint8_t>(id);
+    writer.write<uint8_t>(boss ? 1 : 0);
+    Game::socket.send(writer.packet, writer.at - writer.packet);
+}
 void Game::send_dev_clear_mobs() { send_dev(DevCommandID::kClearMobs, 0, false); }
 void Game::send_dev_reload_petals() { send_dev(DevCommandID::kReloadPetals, 0, false); }
 void Game::send_dev_squad_create() { send_dev(DevCommandID::kSquadCreate, 0, false); }
